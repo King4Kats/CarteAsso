@@ -14,7 +14,7 @@ export function Logo({ size = 22, onClick }: { size?: number; onClick?: () => vo
       }}
     >
       <img
-        src="/logo.svg"
+        src="/logo.svg?v=fr"
         alt="CarteAsso"
         style={{ height: size + 8, width: "auto", display: "block" }}
       />

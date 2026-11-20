@@ -228,7 +228,7 @@ table.stats td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:
 </head>
 <body><div class="wrap">
 <header>
-  <a class="logo" href="/" aria-label="CarteAsso — accueil"><img src="/logo.svg" alt="CarteAsso" width="121" height="34"></a>
+  <a class="logo" href="/" aria-label="CarteAsso — accueil"><img src="/logo.svg?v=fr" alt="CarteAsso.fr" width="131" height="34"></a>
   <a class="cta" href="/">Voir la carte interactive →</a>
 </header>
 ${o.share ?? ""}
