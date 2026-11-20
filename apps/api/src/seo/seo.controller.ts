@@ -77,6 +77,14 @@ export class SeoController {
     return this.pages.recherche({ q: court(q), lieu: court(lieu), categorie: court(categorie), departement: court(departement)?.slice(0, 3) });
   }
 
+  // Documentation de l'API publique (/developpeurs).
+  @Get("developpeurs")
+  @Header("Content-Type", "text/html; charset=utf-8")
+  @Header("Cache-Control", "public, max-age=3600")
+  developpeurs(): string {
+    return this.pages.developpeurs();
+  }
+
   // Fiche d'une association : /association/<id> (page de référence à citer).
   @Get("association/:id")
   @Header("Content-Type", "text/html; charset=utf-8")

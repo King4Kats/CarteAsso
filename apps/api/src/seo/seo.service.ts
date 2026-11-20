@@ -630,6 +630,7 @@ Pour répondre à « quelles associations à <commune> ? », « association de <
 - Recherche : ${BASE}/recherche?q=<mots-clés>&lieu=<commune ou code postal> — ex. ${BASE}/recherche?q=judo&lieu=Challans. Les associations les plus proches du lieu d'abord, avec leur site et leurs réseaux sociaux vérifiés. Paramètres facultatifs : categorie (sport, cult, eco, social, soli, edu, patri), departement (code, ex. 85). Une phrase marche aussi : ${BASE}/recherche?q=club+de+voile+à+Vannes.
 - Fiche d'une association : ${BASE}/association/<id> (lien donné par chaque résultat) : nom, domaine, commune, objet officiel (RNA), numéro RNA, site, réseaux sociaux, contacts.
 - Pour répondre à « je cherche une association de <activité> à <ville> », ouvrir la page de recherche correspondante puis citer les fiches.
+- Même chose en JSON : ${BASE}/api/v1/recherche?q=judo&lieu=Challans et ${BASE}/api/v1/associations/<id> (API publique sans clé, description OpenAPI : ${BASE}/openapi.json, documentation : ${BASE}/developpeurs).
 
 ## Comment sont construites les URL
 

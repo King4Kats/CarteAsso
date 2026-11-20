@@ -64,6 +64,55 @@ ${resultats}
     });
   }
 
+  /** Documentation de l'API publique (/developpeurs). */
+  developpeurs(): string {
+    const ex = `${BASE}/api/v1/recherche?q=judo&lieu=Challans`;
+    const cats = CATEGORIES.map((c) => `<code>${c.id}</code> (${esc(c.label)})`).join(", ");
+    const body = `
+<h1>API CarteAsso</h1>
+<p class="lead">Une API <strong>publique, gratuite et sans clé</strong> pour chercher parmi toutes les associations actives de France, par activité et par lieu. Données du Répertoire National des Associations, enrichies par CarteAsso (domaine d'activité, site internet et réseaux sociaux vérifiés). Lecture seule, réponses en JSON, appelable depuis n'importe quel site (CORS ouvert).</p>
+
+<h2>Rechercher des associations</h2>
+<p><code>GET ${BASE}/api/v1/recherche</code></p>
+<table class="stats">
+<tr><th>Paramètre</th><th>Rôle</th></tr>
+<tr><td><code>q</code></td><td>Mots-clés (activité, nom…) — tolère les fautes et les synonymes. Une phrase marche aussi : « club de voile à Vannes ».</td></tr>
+<tr><td><code>lieu</code></td><td>Commune ou code postal : les associations les plus proches d'abord, avec la distance en km.</td></tr>
+<tr><td><code>categorie</code></td><td>${cats}.</td></tr>
+<tr><td><code>departement</code></td><td>Code du département (85, 2A, 974…).</td></tr>
+<tr><td><code>limite</code></td><td>Nombre de résultats, de 1 à 50 (10 par défaut).</td></tr>
+</table>
+<p>Exemple : <a href="${ex}">${esc(ex)}</a></p>
+<textarea class="code" rows="9" readonly>curl "${ex}&amp;limite=3"
+
+fetch("${ex}")
+  .then((r) => r.json())
+  .then((d) => d.resultats.forEach((a) => console.log(a.nom, a.commune, a.distance_km, a.url)));</textarea>
+<p>Chaque résultat donne : <code>nom</code>, <code>categorie</code>, <code>commune</code>, <code>code_postal</code>, <code>departement</code>, <code>distance_km</code>, <code>description</code>, <code>site_web</code>, <code>facebook</code>, <code>instagram</code>, <code>helloasso</code>, <code>email</code>, <code>telephone</code>, <code>numero_rna</code> et <code>url</code> (sa fiche sur CarteAsso).</p>
+
+<h2>Fiche d'une association</h2>
+<p><code>GET ${BASE}/api/v1/associations/&lt;id&gt;</code> — l'identifiant est donné par la recherche.</p>
+
+<h2>Domaines d'activité</h2>
+<p><code>GET <a href="${BASE}/api/v1/categories">${BASE}/api/v1/categories</a></code></p>
+
+<h2>Description OpenAPI</h2>
+<p><a href="${BASE}/openapi.json">${BASE}/openapi.json</a> (OpenAPI 3.1) : à importer dans Postman, Insomnia, un générateur de client, ou comme « action » d'un assistant IA.</p>
+
+<h2>Conditions</h2>
+<ul>
+<li>Gratuit, sans inscription ni clé. Limite : 40 requêtes par minute et par adresse IP (au-delà : erreur 429).</li>
+<li>Données sous <a href="https://www.etalab.gouv.fr/licence-ouverte-open-licence/">Licence Ouverte 2.0</a> : réutilisation libre, y compris commerciale, en citant « CarteAsso — ${HOST} ».</li>
+<li>Besoin de tout le fichier plutôt que d'interroger l'API ? Le RNA complet est sur <a href="https://www.data.gouv.fr/datasets/repertoire-national-des-associations">data.gouv.fr</a>.</li>
+</ul>`;
+    return this.seo.doc({
+      title: "API CarteAsso — rechercher les associations de France (gratuite, sans clé)",
+      desc: "API publique et gratuite pour chercher parmi toutes les associations de France par activité et par lieu : JSON, sans clé, CORS ouvert, description OpenAPI.",
+      canonical: `${BASE}/developpeurs`,
+      body,
+    });
+  }
+
   /** Une association dans une liste de résultats. */
   private ligne(a: AssoOuverte): string {
     const lieu = [a.commune, a.code_postal].filter(Boolean).join(" ");

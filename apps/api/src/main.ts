@@ -20,9 +20,11 @@ async function bootstrap(): Promise<void> {
   app.setGlobalPrefix("api");
   // CORS = autorise le front (autre adresse/port) à appeler l'API.
   // "*" => on autorise tout le monde ; sinon on découpe la liste d'origines séparées par des virgules.
-  app.enableCors({
-    origin: env.CORS_ORIGIN === "*" ? true : env.CORS_ORIGIN.split(","),
-  });
+  // L'API publique /api/v1 (lecture seule, documentée sur /developpeurs) est ouverte à tous
+  // les sites ; le reste de l'API ne répond qu'aux origines de CORS_ORIGIN.
+  const origines = env.CORS_ORIGIN === "*" ? true : env.CORS_ORIGIN.split(",");
+  app.enableCors((req: { url?: string }, cb: (err: Error | null, o: { origin: boolean | string[] }) => void) =>
+    cb(null, { origin: req.url?.startsWith("/api/v1/") ? true : origines }));
   // Permet à Nest de bien fermer les connexions (base de données...) quand le serveur s'arrête.
   app.enableShutdownHooks();
 

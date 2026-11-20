@@ -7,6 +7,7 @@ import { SeoController } from "./seo.controller";
 import { SeoService } from "./seo.service";
 import { OuvertService } from "../ouvert/ouvert.service";
 import { PagesOuvertes } from "../ouvert/ouvert.pages";
+import { ApiV1Controller } from "../ouvert/api-v1.controller";
 
-@Module({ controllers: [SeoController], providers: [SeoService, OuvertService, PagesOuvertes] })
+@Module({ controllers: [SeoController, ApiV1Controller], providers: [SeoService, OuvertService, PagesOuvertes] })
 export class SeoModule {}
