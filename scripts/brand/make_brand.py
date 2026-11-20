@@ -100,7 +100,12 @@ def logo_svg(ink=INK):
     size = 74
     x0, base = 70, 86
     wm, w = wordmark(x0, base, size, ink=ink)
-    W = int(x0 + w + 16)
+    # « .fr » en petit derrière le nom (20/11/2026, demande de Flavien) : même encre, ~40 % de la
+    # taille, posé sur la ligne de base, juste après la pastille bleue du dernier « o ».
+    fr_size = size * 0.4
+    fr_x = x0 + w + 12
+    fr_d, fr_w = text_path(".fr", fr_x, base, fr_size)
+    W = int(fr_x + fr_w + 12)
     H = 122
     # Confettis posés comme sur l'ancien : jaune derrière la 1re lettre, magenta au-dessus,
     # vert entre les deux mots, bleu en bas à droite du dernier « o ».
@@ -112,9 +117,10 @@ def logo_svg(ink=INK):
         confetti_left(0, 4, 0.95),
         wm,
         f'<circle cx="{x0 + w - 8}" cy="{base + 4}" r="9.5" fill="{BLUE}"/>',
+        f'<path d="{fr_d}" fill="{ink}"/>',
     ]
     return W, H, (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" '
-                  f'role="img" aria-label="CarteAsso">{"".join(parts)}</svg>')
+                  f'role="img" aria-label="CarteAsso.fr">{"".join(parts)}</svg>')
 
 
 def icon_svg(bg=None):
