@@ -1,3 +1,4 @@
+# HORS SERVICE depuis 11/2026 : ses passes tournent sur le VPS 1 (voir passes.vps1.example).
 # VPS 2 : passes Instagram, HelloAsso et découverte générale. Copier en `.passes`.
 # LABEL  MOTEURS (liste avec repli)  SCRIPT ARGS...   ({DEPT} = département actif)
 tgtig   bing,yahoo,brave       discover_targeted.py --platform instagram --limit 120 --sleep 2.0 --dept {DEPT}

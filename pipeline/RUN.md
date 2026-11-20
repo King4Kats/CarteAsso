@@ -4,26 +4,26 @@ Refonte complète : découverte DDG → vérif LLM locale (Ollama) → apply/rou
 Un seul script écrit dans `social` (apply). Tout le reste écrit des preuves dans `meta.*`.
 Chaque passe est **idempotente** (gating timestamp) et **reprenable** (commit par ligne).
 
-## Prérequis (machine Windows locale, GPU AMD RX 7800 XT)
+## Mise en route (état au 20/11/2026)
 
-1. **Ollama** lancé avec le modèle :
-   ```powershell
-   & "$env:LOCALAPPDATA\Programs\Ollama\ollama.exe" list   # doit montrer qwen3.5:27b
-   ```
-2. **Tunnels SSH vers la DB** (Postgres `ca-db` non exposé sur le serveur). Le supervisor
-   maintient DEUX tunnels pour répartir la charge (un seul forward sérialise tout le trafic) :
-   ```bash
-   ssh -N -o ServerAliveInterval=30 -L 0.0.0.0:5433:DB_CONTAINER_IP:5432 your-server  # jobs légers
-   ssh -N -o ServerAliveInterval=30 -L 0.0.0.0:5434:DB_CONTAINER_IP:5432 your-server  # jobs DB-lourds
-   ```
-   5433 = discover/verify/helloasso/fb ; 5434 = liveness/events + bloc périodique apply/reap/
-   purge/score. (DB_CONTAINER_IP = IP du conteneur `ca-db` ; re-vérifier avec
-   `ssh your-server "docker exec ca-db hostname -i"`. Les scripts/diag ad-hoc utilisent 5433.)
-3. **venv** : `.venv` ici, deps `psycopg[binary] ddgs httpx readability-lxml ollama`.
+**PC (validation IA, application, entretien)** — tâche planifiée Windows `CarteAssoVerify`
+(toutes les 5 min) → `run-hidden.vbs` → `ca-keepalive.ps1`, qui maintient, sans doublon :
 
-Variables d'env (défauts entre parenthèses) :
-`DATABASE_URL` (postgres://carteasso:carteasso@localhost:5433/carteasso),
-`OLLAMA_HOST` (http://localhost:11434), `VERIFY_MODEL` (qwen3.5:27b).
+- deux tunnels SSH liés à `127.0.0.1` vers le conteneur `ca-db` : **15433** (vérification) et
+  **5434** (application, entretien). Pas 5433 : souvent pris par une autre base Docker locale ;
+- Ollama et le modèle `gemma4:12b` (contexte 8 192). Les appels passent `think=False` : sinon le
+  modèle « réfléchit » d'abord, épuise ses jetons et rend une réponse vide ;
+- les boucles `run_verify.ps1`, `run_apply.ps1`, `run_maint.ps1` ;
+- un battement de cœur (id 1) via `heartbeat.py` (copie de `vps/heartbeat.py` à côté des scripts).
+
+Garde-fous : un jeu lancé (Steam, Epic, Riot, GOG, Ubisoft, EA) pose `.pause_ollama` (contenu
+`AUTO`) et suspend la validation jusqu'à sa fermeture ; plus d'un `llama-server` = Ollama relancé.
+
+Fichiers locaux non versionnés : `.dbpass` (mot de passe de la base), `.serveur` (alias SSH du
+serveur, une ligne), `.venv` (deps `psycopg[binary] ddgs httpx readability-lxml trafilatura ollama`).
+
+**VPS (recherche des liens)** — voir `vps/` : `runner.sh` lit `.passes`, `keepalive.sh` le relance
+(cron, `vps/installer-cron.sh`), base jointe par tunnel inverse `localhost:55432`.
 
 ## Ordre d'exécution
 

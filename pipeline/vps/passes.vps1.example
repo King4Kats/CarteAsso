@@ -1,4 +1,8 @@
-# VPS 1 : passes Facebook et site web. Copier en `.passes` à côté de runner.sh.
+# VPS 1 : toutes les passes de recherche. Copier en `.passes` à côté de runner.sh.
+# Depuis le 20/11/2026 il porte aussi Instagram, HelloAsso et la découverte générale (VPS 2 hors service).
 # LABEL  MOTEURS (liste avec repli)  SCRIPT ARGS...   ({DEPT} = département actif)
 tgtfb   google,bing,yahoo      discover_targeted.py --platform facebook --limit 120 --sleep 2.0 --dept {DEPT}
 tgtweb  brave,bing,yahoo       discover_targeted.py --platform website --limit 120 --sleep 2.0 --dept {DEPT}
+tgtig   bing,yahoo,google      discover_targeted.py --platform instagram --limit 120 --sleep 2.0 --dept {DEPT}
+ha      brave,bing,yahoo       helloasso.py --limit 120 --sleep 2.0 --dept {DEPT}
+disc    bing,yahoo,brave       discover.py --limit 800 --sleep 1.2 --dept {DEPT}

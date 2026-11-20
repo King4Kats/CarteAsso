@@ -117,7 +117,7 @@ def main() -> int:
                 if url:
                     conn.execute(
                         """UPDATE associations
-                           SET social = COALESCE(social,'{}'::jsonb) || jsonb_build_object('helloasso', %s),
+                           SET social = COALESCE(social,'{}'::jsonb) || jsonb_build_object('helloasso', %s::text),
                                meta = meta || %s::jsonb
                            WHERE id = %s""",
                         (url, json.dumps({"helloassoFound": url, "helloassoCheckedAt": ts}), asso["id"]),

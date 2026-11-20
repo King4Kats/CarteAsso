@@ -61,6 +61,8 @@ def ollama_judge(client: Client, model: str, payload: str) -> dict:
     resp = client.generate(
         model=model, system=SYSTEM, prompt=payload, format="json",
         options={"temperature": 0, "num_predict": 200}, stream=False,
+        # Sans think=False, gemma4 « réfléchit » d'abord et épuise les 200 jetons : réponse vide.
+        think=False,
     )
     raw = (resp.get("response") or "").strip()
     try:
