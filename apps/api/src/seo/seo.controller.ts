@@ -8,14 +8,16 @@
  * On renvoie directement la chaîne HTML/XML ; @Header fixe le bon Content-Type.
  * nginx ne route que les slugs de départements couverts vers l'API (le reste = SPA).
  */
-import { Controller, Get, Header, NotFoundException, Param, StreamableFile } from "@nestjs/common";
+import { Controller, Get, Header, NotFoundException, Param, Query, StreamableFile, UseGuards } from "@nestjs/common";
+import { RechercheRateLimitGuard } from "../common/recherche-rate-limit.guard";
+import { PagesOuvertes } from "../ouvert/ouvert.pages";
 import { SeoService } from "./seo.service";
 
 // Préfixe "seo" -> routes réelles /api/seo/... ; nginx réécrit les URL propres
 // (/vendee/challans -> /api/seo/vendee/challans) pour que Google voie des URL propres.
 @Controller("seo")
 export class SeoController {
-  constructor(private readonly svc: SeoService) {}
+  constructor(private readonly svc: SeoService, private readonly pages: PagesOuvertes) {}
 
   @Get("sitemap.xml")
   @Header("Content-Type", "application/xml; charset=utf-8")
@@ -29,6 +31,14 @@ export class SeoController {
   @Header("Content-Type", "application/xml; charset=utf-8")
   sitemapPart(@Param("n") n: string): Promise<string> {
     return this.svc.sitemapChunk(Number(n) || 0);
+  }
+
+  // Fiches d'associations du sitemap : nginx réécrit /sitemap-asso-3.xml -> /api/seo/sitemap-asso/3.
+  @Get("sitemap-asso/:n")
+  @Header("Content-Type", "application/xml; charset=utf-8")
+  @Header("Cache-Control", "public, max-age=86400")
+  sitemapAsso(@Param("n") n: string): Promise<string> {
+    return this.svc.sitemapAssoChunk(Number(n) || 0);
   }
 
   // Index racine de tous les territoires (défini AVANT :dept pour ne pas être avalé).
@@ -51,6 +61,30 @@ export class SeoController {
   @Header("Cache-Control", "public, max-age=3600")
   llms(): Promise<string> {
     return this.svc.llms();
+  }
+
+  // Recherche lisible sans JavaScript (/recherche?q=judo&lieu=Challans) : une IA peut
+  // fabriquer l'adresse elle-même et lire les résultats. Paramètres tronqués à 100 caractères.
+  @Get("recherche")
+  @UseGuards(RechercheRateLimitGuard)
+  @Header("Content-Type", "text/html; charset=utf-8")
+  @Header("Cache-Control", "public, max-age=600")
+  recherche(
+    @Query("q") q?: string, @Query("lieu") lieu?: string,
+    @Query("categorie") categorie?: string, @Query("departement") departement?: string,
+  ): Promise<string> {
+    const court = (v?: string) => (typeof v === "string" ? v.slice(0, 100) : undefined);
+    return this.pages.recherche({ q: court(q), lieu: court(lieu), categorie: court(categorie), departement: court(departement)?.slice(0, 3) });
+  }
+
+  // Fiche d'une association : /association/<id> (page de référence à citer).
+  @Get("association/:id")
+  @Header("Content-Type", "text/html; charset=utf-8")
+  @Header("Cache-Control", "public, max-age=3600")
+  async association(@Param("id") id: string): Promise<string> {
+    const html = await this.pages.association(id);
+    if (!html) throw new NotFoundException("Association introuvable");
+    return html;
   }
 
   @Get("chiffres")

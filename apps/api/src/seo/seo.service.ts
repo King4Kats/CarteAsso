@@ -54,7 +54,7 @@ const CAT_BY_SLUG: Record<string, string> = Object.fromEntries(
   Object.entries(CAT_SLUG).map(([id, slug]) => [slug, id]),
 );
 
-function esc(s: string | null | undefined): string {
+export function esc(s: string | null | undefined): string {
   return (s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 function cleanCity(s: string | null | undefined): string {
@@ -108,6 +108,13 @@ export class SeoService {
     return list;
   }
 
+  /** Adresse de la page commune d'une association (null si sa commune n'a pas de page). */
+  async lienCommune(dept: string | null, city: string | null): Promise<string | null> {
+    if (!dept || !city) return null;
+    const c = (await this.allCommunes()).find((x) => x.dept === dept && x.city === city);
+    return c ? `${BASE}/${c.deptSlug}/${c.slug}` : null;
+  }
+
   /** Identité de l'éditeur (schema.org) : répétée sur chaque page pour que Google
    *  et les moteurs IA rattachent toutes les pages à la même entité « CarteAsso »
    *  (Knowledge Graph, citations « selon CarteAsso… »). */
@@ -145,7 +152,9 @@ export class SeoService {
   }
 
   /** Enveloppe un contenu dans un document HTML complet (head SEO + style minimal). */
-  private doc(o: { title: string; desc: string; canonical: string; jsonld?: string; body: string; share?: string; og?: string }): string {
+  /** Gabarit HTML commun des pages SEO (public : aussi utilisé par les pages /recherche et
+   *  /association/<id> du module « ouvert »). `robots` : par défaut indexable. */
+  doc(o: { title: string; desc: string; canonical: string; jsonld?: string; body: string; share?: string; og?: string; robots?: string }): string {
     const og = o.og ?? `${BASE}/og-image.png`;
     // Le JSON-LD de la page + l'identité éditeur, en un seul bloc.
     const own = o.jsonld ? JSON.parse(o.jsonld) : [];
@@ -163,7 +172,7 @@ export class SeoService {
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#e11567">
-<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<meta name="robots" content="${o.robots ?? "index, follow, max-image-preview:large, max-snippet:-1"}">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="CarteAsso">
 <meta property="og:locale" content="fr_FR">
@@ -253,8 +262,8 @@ ${o.body}
     const c = (await this.allCommunes()).find((x) => x.dept === deptCode && x.slug === communeSlug);
     if (!c) return null;
     const { nom: deptNom, region } = SEO_DEPARTEMENTS[deptCode];
-    const rows = await this.db.execute<{ name: string; category_id: string; social: Record<string, string> | null; website: string | null }>(sql`
-      SELECT name, category_id, social, website
+    const rows = await this.db.execute<{ id: string; name: string; category_id: string; social: Record<string, string> | null; website: string | null }>(sql`
+      SELECT id, name, category_id, social, website
       FROM associations
       WHERE department = ${c.dept} AND status = 'published' AND city = ${c.city}
       ORDER BY name ASC
@@ -271,7 +280,8 @@ ${o.body}
       const site = a.social?.website || a.website || null;
       const safeSite = site && /^https?:\/\//i.test(site) ? site : null;
       const link = safeSite ? ` <a href="${esc(safeSite)}" target="_blank" rel="nofollow noopener">site</a>` : "";
-      return `  <li><span class="nom">${esc(a.name)}</span> <span class="cat">· ${esc(label)}</span>${link}</li>`;
+      // Le nom mène à la fiche de l'association (/association/<id>) : page à citer.
+      return `  <li><a class="nom" href="/association/${a.id}" style="color:inherit;font-size:inherit;margin:0">${esc(a.name)}</a> <span class="cat">· ${esc(label)}</span>${link}</li>`;
     };
 
     // On REGROUPE par catégorie : chaque groupe devient une section avec un H2
@@ -615,6 +625,12 @@ Pour répondre à « quelles associations à <commune> ? », « association de <
 - [Associations par commune](${BASE}/territoires): index de tous les départements et communes couverts.
 - [Plan du site](${BASE}/sitemap.xml): toutes les pages communes, départements et thèmes.
 
+## Chercher une association (sans JavaScript)
+
+- Recherche : ${BASE}/recherche?q=<mots-clés>&lieu=<commune ou code postal> — ex. ${BASE}/recherche?q=judo&lieu=Challans. Les associations les plus proches du lieu d'abord, avec leur site et leurs réseaux sociaux vérifiés. Paramètres facultatifs : categorie (sport, cult, eco, social, soli, edu, patri), departement (code, ex. 85). Une phrase marche aussi : ${BASE}/recherche?q=club+de+voile+à+Vannes.
+- Fiche d'une association : ${BASE}/association/<id> (lien donné par chaque résultat) : nom, domaine, commune, objet officiel (RNA), numéro RNA, site, réseaux sociaux, contacts.
+- Pour répondre à « je cherche une association de <activité> à <ville> », ouvrir la page de recherche correspondante puis citer les fiches.
+
 ## Comment sont construites les URL
 
 - Page commune : ${BASE}/<departement>/<commune> — ex. ${exUrl}${ex && exDept ? ` (${fr(ex.n)} associations à ${ex.display}, ${exDept.nom})` : ""}.
@@ -838,12 +854,41 @@ ${sections}`;
     return { urls, mod };
   }
 
-  /** /sitemap.xml = sitemap INDEX : liste les sous-sitemaps /sitemap-N.xml. */
+  // Fiches d'associations dans le sitemap : seulement les « riches » (site ou réseau social
+  // vérifié, ~220 000 en 11/2026). Les autres fiches restent trouvables par les liens des
+  // pages communes. Le nombre change peu : recalculé toutes les 6 h.
+  private readonly RICHE = sql`(coalesce(website, '') <> '' OR coalesce(social, '{}'::jsonb) ?| array['website','facebook','instagram','helloasso'])`;
+  private nbRiches: { at: number; n: number } | null = null;
+  private async nombreFichesRiches(): Promise<number> {
+    if (this.nbRiches && Date.now() - this.nbRiches.at < 6 * 3600 * 1000) return this.nbRiches.n;
+    const r = await this.db.execute<{ n: number }>(sql`SELECT count(*)::int AS n FROM associations WHERE status = 'published' AND ${this.RICHE}`);
+    this.nbRiches = { at: Date.now(), n: r.rows[0]?.n ?? 0 };
+    return this.nbRiches.n;
+  }
+
+  /** /sitemap-asso-N.xml = une tranche de 20 000 fiches d'associations. */
+  async sitemapAssoChunk(n: number): Promise<string> {
+    const r = await this.db.execute<{ id: string; updated: unknown }>(sql`
+      SELECT id, updated_at AS updated FROM associations
+      WHERE status = 'published' AND ${this.RICHE}
+      ORDER BY id
+      LIMIT ${this.SITEMAP_CHUNK} OFFSET ${Math.max(0, n) * this.SITEMAP_CHUNK}`);
+    const urls = r.rows.map((a) =>
+      `<url><loc>${BASE}/association/${a.id}</loc><lastmod>${isoDate(a.updated)}</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>`);
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;
+  }
+
+  /** /sitemap.xml = sitemap INDEX : liste les sous-sitemaps /sitemap-N.xml et /sitemap-asso-N.xml. */
   async sitemap(): Promise<string> {
     const { urls, mod } = await this.sitemapUrls();
     const n = Math.max(1, Math.ceil(urls.length / this.SITEMAP_CHUNK));
-    const items = Array.from({ length: n }, (_, i) =>
-      `<sitemap><loc>${BASE}/sitemap-${i}.xml</loc><lastmod>${mod}</lastmod></sitemap>`);
+    const nAsso = Math.ceil((await this.nombreFichesRiches()) / this.SITEMAP_CHUNK);
+    const items = [
+      ...Array.from({ length: n }, (_, i) =>
+        `<sitemap><loc>${BASE}/sitemap-${i}.xml</loc><lastmod>${mod}</lastmod></sitemap>`),
+      ...Array.from({ length: nAsso }, (_, i) =>
+        `<sitemap><loc>${BASE}/sitemap-asso-${i}.xml</loc><lastmod>${mod}</lastmod></sitemap>`),
+    ];
     return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${items.join("\n")}\n</sitemapindex>\n`;
   }
 

@@ -156,6 +156,29 @@ export class SearchService implements OnModuleInit {
     }
   }
 
+  /** Recherche « pour les IA » (API ouverte, MCP, page /recherche) : ids classés par
+   *  pertinence, éventuellement limités à quelques départements. `matchingStrategy:
+   *  "frequency"` laisse tomber d'abord les mots les plus courants si la phrase entière ne
+   *  donne rien (« club voile » trouve quand même « Voiles Libres »). null = moteur indisponible. */
+  async rechercherIds(q: string, departements: string[] = [], limit = 500): Promise<string[] | null> {
+    if (!this.available) return null;
+    try {
+      const filtre = departements.length
+        ? `department IN [${departements.map((d) => JSON.stringify(d)).join(", ")}]`
+        : undefined;
+      const res = await this.index.search(q, {
+        limit,
+        attributesToRetrieve: ["id"],
+        matchingStrategy: "frequency",
+        ...(filtre ? { filter: filtre } : {}),
+      });
+      return res.hits.map((h) => h.id);
+    } catch (err) {
+      this.logger.warn(`rechercherIds échoué : ${(err as Error).message}`);
+      return null;
+    }
+  }
+
   /** Renvoie TOUS les ids d'associations qui matchent un mot-clé (nom OU descriptif,
    *  synonymes inclus), jusqu'à `cap`. Sert à filtrer les points de la carte : on masque
    *  ceux qui ne sont pas dans la liste. Léger : on ne récupère que les ids. */
