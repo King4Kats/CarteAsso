@@ -3,11 +3,12 @@
  * Il décide quel écran montrer : la page d'accueil (Landing), la carte (MapView),
  * ou le tri collaboratif de la quarantaine (Quarantine, accessible via #quarantaine).
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Landing } from "./screens/Landing";
 import { MapView } from "./screens/MapView";
 import { Quarantine } from "./screens/Quarantine";
 import { api } from "./lib/api";
+import { departementOuvert, ecranVu } from "./lib/mesure";
 import type { DeptMeta } from "./data/departements";
 
 type Screen = "landing" | "map" | "quarantaine";
@@ -61,11 +62,18 @@ export function App() {
   };
 
   // Suivi de fréquentation anonyme : une « page vue » à chaque changement d'écran.
-  useEffect(() => { api.track("page", { path: screen }); }, [screen]);
+  // Matomo : la 1re page vue est comptée par stats.js, on ne compte que les changements.
+  const premierEcran = useRef(true);
+  useEffect(() => {
+    api.track("page", { path: screen });
+    if (premierEcran.current) { premierEcran.current = false; return; }
+    ecranVu(screen, screen === "map" ? `Carte — ${dept?.nom ?? ""}` : `CarteAsso — ${screen}`);
+  }, [screen]);
 
   // Ouvre un territoire (depuis la carte ou la popup) + compte la région consultée.
   const openDept = (d: DeptMeta) => {
     api.track("region", { dept: d.code });
+    departementOuvert(d.nom, d.code);
     setDept(d);
     setScreen("map");
     window.history.pushState({ screen: 'map', dept: d }, "", "#carte");

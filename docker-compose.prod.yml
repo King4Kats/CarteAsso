@@ -1,5 +1,6 @@
 # Déploiement complet CarteAsso sur your-server (tout en conteneurs).
-# Web exposé sur le LAN en :8088. DB/Meili en réseau interne (pas de port hôte :
+# Web exposé en :8088 sur la machine seulement (127.0.0.1) : le public passe par le
+# tunnel Cloudflare (cloudflared, réseau hôte -> localhost:8088), jamais en direct. DB/Meili en réseau interne (pas de port hôte :
 # 5432 est déjà pris par Supabase sur la machine).
 services:
   db:
@@ -72,7 +73,7 @@ services:
     container_name: ca-web
     restart: unless-stopped
     ports:
-      - "8088:80"
+      - "127.0.0.1:8088:80"
     volumes:
       - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:

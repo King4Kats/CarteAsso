@@ -187,6 +187,7 @@ export class SeoService {
 <meta name="twitter:description" content="${esc(o.desc)}">
 <meta name="twitter:image" content="${og}">
 <script type="application/ld+json">${ld}</script>
+<script defer src="/stats.js"></script>
 <style>
 :root{--ink:#15151b;--muted:#6b7280;--accent:#ff2d78;--bg:#fff;--soft:#fbfbf9;--line:#ececec}
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg);line-height:1.6}

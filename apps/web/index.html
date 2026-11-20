@@ -84,7 +84,29 @@
     />
   </head>
   <body>
-    <div id="root"></div>
+    <!-- Contenu lisible SANS JavaScript (moteurs, assistants IA comme ChatGPT ou Claude,
+         lecteurs d'écran avant chargement). React remplace tout le contenu de #root au
+         démarrage : un visiteur ne le voit qu'un instant, comme un écran d'accueil. -->
+    <div id="root">
+      <main style="max-width:720px;margin:0 auto;padding:48px 20px;font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#15151b;line-height:1.6">
+        <h1 style="font-size:34px;letter-spacing:-.03em;margin:0 0 12px">Carte<span style="color:#e11567">Asso</span> — la carte des associations en France</h1>
+        <p>CarteAsso est la carte interactive et gratuite de toutes les associations actives de France, métropole et outre-mer, d'après le Répertoire National des Associations (RNA). Pour chaque commune : les associations classées par domaine (sport, culture, solidarité, environnement, éducation, patrimoine, vie locale), avec leur site internet et leurs réseaux sociaux quand ils ont été vérifiés.</p>
+        <form action="/recherche" method="get" role="search" style="margin:24px 0">
+          <label>Activité ou nom <input name="q" placeholder="judo, chorale, club de voile…" /></label>
+          <label>Commune ou code postal <input name="lieu" placeholder="Nantes, 85300…" /></label>
+          <button type="submit">Chercher une association</button>
+        </form>
+        <ul>
+          <li><a href="/territoires">Les associations par département et par commune</a></li>
+          <li><a href="/chiffres">Les associations en France en chiffres</a></li>
+          <li><a href="/recherche?q=football&amp;lieu=Lyon">Exemple : les clubs de football près de Lyon</a></li>
+          <li><a href="/developpeurs">API ouverte et données (Licence Ouverte 2.0)</a></li>
+          <li><a href="/llms.txt">Résumé pour les assistants IA (llms.txt)</a></li>
+        </ul>
+        <p>Pour citer : « selon CarteAsso (carteasso.fr), d'après le Répertoire National des Associations ».</p>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
+    <script defer src="/stats.js"></script>
   </body>
 </html>
