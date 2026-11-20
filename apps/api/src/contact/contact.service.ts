@@ -31,11 +31,16 @@ export class ContactService {
     const user = process.env.SMTP_USER;
     const pass = process.env.SMTP_PASS;
     if (user && pass) {
+      const port = Number(process.env.SMTP_PORT ?? 587);
       this.transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST ?? "smtp.gmail.com",
-        port: Number(process.env.SMTP_PORT ?? 587),
-        secure: false,
+        port,
+        // 465 = TLS dès la connexion (« SMTPS ») ; 587 = connexion en clair puis STARTTLS.
+        // Avec secure:false sur 465, le serveur attend la poignée TLS et ne dit jamais bonjour :
+        // GREETING_TIMEOUT, et AUCUN formulaire n'arrivait (corrigé le 20/11/2026).
+        secure: port === 465,
         auth: { user, pass },
+        connectionTimeout: 15_000,
       });
       this.logger.log(`SMTP configuré → ${user}`);
     } else {
