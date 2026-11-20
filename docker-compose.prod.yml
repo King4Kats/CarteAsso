@@ -46,7 +46,7 @@ services:
       ADMIN_TOKEN: ${ADMIN_TOKEN:-}
       # Domaine public (canonical, sitemap, partages). À passer à https://carteasso.fr
       # dans .env le jour de la bascule (+ rebuild web, qui l'injecte dans index.html).
-      SITE_URL: ${SITE_URL:-https://gemenskarte.fr}
+      SITE_URL: ${SITE_URL:-https://carteasso.fr}
       # Formulaire de contact -> email. Définis SMTP_USER/SMTP_PASS dans .env (gitignoré).
       # Tant qu'ils sont vides, l'API n'envoie pas d'email (mode "console only").
       SMTP_USER: ${SMTP_USER:-}
@@ -68,7 +68,7 @@ services:
       context: .
       dockerfile: deploy/Dockerfile.web
       args:
-        SITE_URL: ${SITE_URL:-https://gemenskarte.fr}
+        SITE_URL: ${SITE_URL:-https://carteasso.fr}
     container_name: ca-web
     restart: unless-stopped
     ports:

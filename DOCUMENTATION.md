@@ -46,7 +46,7 @@ sur data.gouv.fr) sont **pauvres** : on a le nom, l'objet (description), l'adres
 **Règle d'or du projet** : *« mieux vaut une fiche vide qu'une fiche fausse »* — on
 privilégie toujours la **justesse** (précision) à l'exhaustivité.
 
-**En ligne** : https://gemenskarte.fr
+**En ligne** : https://carteasso.fr
 
 ---
 
@@ -85,7 +85,7 @@ pipeline de scripts qui tourne sur un **PC local** (pas sur le serveur).
                           INTERNET
                              │
                     ┌────────▼─────────┐
-                    │  Cloudflare      │  gemenskarte.fr (HTTPS)
+                    │  Cloudflare      │  carteasso.fr (HTTPS)
                     │  Tunnel          │
                     └────────┬─────────┘
                              │
@@ -426,7 +426,7 @@ Seul **ca-web** est exposé sur le LAN (`8088:80`). La base et Meili restent en 
 ### Mise en ligne (Cloudflare Tunnel)
 
 Un conteneur **cloudflared** crée un tunnel sortant vers Cloudflare, qui sert
-`https://gemenskarte.fr` → ca-web. Aucun port ouvert sur internet côté serveur.
+`https://carteasso.fr` → ca-web. Aucun port ouvert sur internet côté serveur.
 Cloudflare **ne met pas en cache** les réponses `/api` (`cf-cache-status: DYNAMIC`) → les
 fiches sont toujours fraîches.
 
@@ -475,7 +475,7 @@ vérifs côté backend Node. `fetch-rna.yml` : télécharge le RNA (mensuel ou s
         └────┬─────┘
              │ /api/*
         ┌────▼─────┐
-        │  ca-web  │  → le navigateur de l'utilisateur (gemenskarte.fr)
+        │  ca-web  │  → le navigateur de l'utilisateur (carteasso.fr)
         └──────────┘
 ```
 
@@ -516,7 +516,7 @@ carte de France de l'accueil — voir `apps/web/src/data/departements.ts`) :
 - **Aucun secret dans git** : tout dans `.env` (serveur, chmod 600, gitignoré).
 - **Validation systématique** des entrées via Zod (`packages/shared` + `ZodValidationPipe`).
 - **Anti-spam** : `RateLimitGuard` (par IP) sur les formulaires de contact et la création.
-- **CORS** restreint à `gemenskarte.fr`.
+- **CORS** restreint à `carteasso.fr`.
 - **Pas de port ouvert** sur internet (tunnel Cloudflare sortant uniquement).
 - Les formulaires envoient un **email** (SMTP), ils n'écrivent pas en base directement.
 - Le pipeline écrit via des **tunnels SSH** chiffrés, jamais d'exposition réseau.

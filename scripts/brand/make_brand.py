@@ -5,8 +5,8 @@ Style volontairement IDENTIQUE à l'ancien logo GemensKarte : typo grasse
 (Arial/Liberation Sans Bold), « Carte » couleur encre, « Asso » magenta,
 confettis autour. Le texte est converti en tracés (pas de police à charger).
 
-Usage : SITE_HOST=gemenskarte.fr python scripts/brand/make_brand.py <dossier_sortie>
-  (SITE_HOST = domaine écrit sur l'image de partage ; carteasso.fr après la bascule)
+Usage : SITE_HOST=carteasso.fr python scripts/brand/make_brand.py <dossier_sortie>
+  (SITE_HOST = domaine écrit sur l'image de partage)
   -> logo.svg, logo-white.svg, icon.svg, og-image.svg, badge.svg
 Les PNG/ICO sont produits ensuite par render_brand.py (navigateur headless).
 """
@@ -24,7 +24,7 @@ BLUE = "#4f6cb3"
 GREEN = "#57ba95"
 YELLOW = "#fcc22d"
 CORAL = "#ee785d"
-SITE_HOST = os.environ.get("SITE_HOST", "gemenskarte.fr")
+SITE_HOST = os.environ.get("SITE_HOST", "carteasso.fr")
 
 FONT_CANDIDATES = [
     r"C:\Windows\Fonts\arialbd.ttf",

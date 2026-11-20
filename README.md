@@ -151,7 +151,7 @@ l'API. Elles relèvent chacune de leur propre licence :
 |---------|--------|---------|----------------------|
 | Fiches associations (nom, objet, adresse, n° RNA, site déclaré) | [RNA — Ministère de l'Intérieur](https://www.data.gouv.fr/fr/datasets/repertoire-national-des-associations/) via data.gouv.fr | [Licence Ouverte 2.0 (Etalab)](https://www.etalab.gouv.fr/licence-ouverte-open-licence/) | « Ministère de l'Intérieur — RNA » |
 | Géolocalisation des adresses | [Base Adresse Nationale](https://adresse.data.gouv.fr/) | Licence Ouverte 2.0 (Etalab) | « BAN » |
-| **Enrichissements CarteAsso** (catégorie, site web vérifié, réseaux sociaux, corrections) | produits par ce projet | Licence Ouverte 2.0 (Etalab) | « CarteAsso — gemenskarte.fr » |
+| **Enrichissements CarteAsso** (catégorie, site web vérifié, réseaux sociaux, corrections) | produits par ce projet | Licence Ouverte 2.0 (Etalab) | « CarteAsso — carteasso.fr » |
 | Fond de carte | [OpenStreetMap](https://www.openstreetmap.org/copyright) | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/) | « © les contributeurs d'OpenStreetMap » |
 | Événements | [OpenAgenda](https://openagenda.com/) | licence propre à chaque agenda | selon l'agenda |
 

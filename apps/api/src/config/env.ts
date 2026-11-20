@@ -34,9 +34,9 @@ const EnvSchema = z.object({
   // administration fermée (les routes admin renvoient 401 tant qu'on ne l'a pas réglé).
   ADMIN_TOKEN: z.string().default(""),
   // Adresse publique du site (canonical, sitemap, partages, llms.txt…). UN SEUL
-  // réglage pour changer de domaine : gemenskarte.fr tant que carteasso.fr n'est
-  // pas branché, puis SITE_URL=https://carteasso.fr dans le .env.
-  SITE_URL: z.string().url().default("https://gemenskarte.fr"),
+  // réglage pour changer de domaine (carteasso.fr depuis le 20/11/2026 ; l'ancien
+  // gemenskarte.fr redirige en 301, voir deploy/nginx.conf).
+  SITE_URL: z.string().url().default("https://carteasso.fr"),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

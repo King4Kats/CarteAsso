@@ -8,7 +8,7 @@ export type ScrapState = "fait" | "en_cours" | "non_scrape";
 export interface DeptMeta {
   code: string;
   nom: string;
-  slug: string; // sous-domaine futur : <slug>.gemenskarte.fr
+  slug: string; // sous-domaine futur : <slug>.carteasso.fr
   region: string;
   state: ScrapState;
 }

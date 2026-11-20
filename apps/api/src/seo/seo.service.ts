@@ -17,7 +17,7 @@ import { getEnv } from "../config/env";
 import { renderOg } from "./og-image";
 
 // Domaine public, réglable par SITE_URL (voir config/env.ts) : rien d'autre à changer
-// le jour de la bascule gemenskarte.fr -> carteasso.fr.
+// pour changer de domaine (bascule gemenskarte.fr -> carteasso.fr faite le 20/11/2026).
 export const BASE = getEnv().SITE_URL.replace(/\/+$/, "");
 export const HOST = new URL(BASE).host;
 const MAX_LISTE = 600; // plafond d'assos affichées par page (évite des pages énormes)

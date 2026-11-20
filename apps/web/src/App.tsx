@@ -13,7 +13,7 @@ import type { DeptMeta } from "./data/departements";
 type Screen = "landing" | "map" | "quarantaine";
 
 // L'ancre #quarantaine (dans l'URL) ouvre directement la page de tri. Pratique pour
-// un lien direct ou un raccourci bureau (gemenskarte.fr/#quarantaine).
+// un lien direct ou un raccourci bureau (carteasso.fr/#quarantaine).
 function screenFromHash(): Screen | null {
   return typeof window !== "undefined" && window.location.hash.replace("#", "") === "quarantaine"
     ? "quarantaine"
