@@ -1,7 +1,7 @@
 # Déploiement complet CarteAsso sur your-server (tout en conteneurs).
 # Web exposé en :8088 sur la machine seulement (127.0.0.1) : le public passe par le
 # tunnel Cloudflare (cloudflared, réseau hôte -> localhost:8088), jamais en direct. DB/Meili en réseau interne (pas de port hôte :
-# 5432 est déjà pris par Supabase sur la machine).
+# 5432 est déjà pris par un autre service sur la machine).
 services:
   db:
     image: postgis/postgis:16-3.6

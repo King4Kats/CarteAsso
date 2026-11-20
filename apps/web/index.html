@@ -86,9 +86,10 @@
   <body>
     <!-- Contenu lisible SANS JavaScript (moteurs, assistants IA comme ChatGPT ou Claude,
          lecteurs d'écran avant chargement). React remplace tout le contenu de #root au
-         démarrage : un visiteur ne le voit qu'un instant, comme un écran d'accueil. -->
+         démarrage. Masqué à l'écran (comme un texte « pour lecteurs d'écran ») pour éviter
+         le flash de HTML brut avant le chargement de l'app (retour de Flavien, 20/11/2026). -->
     <div id="root">
-      <main style="max-width:720px;margin:0 auto;padding:48px 20px;font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#15151b;line-height:1.6">
+      <main style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0">
         <h1 style="font-size:34px;letter-spacing:-.03em;margin:0 0 12px">Carte<span style="color:#e11567">Asso</span> — la carte des associations en France</h1>
         <p>CarteAsso est la carte interactive et gratuite de toutes les associations actives de France, métropole et outre-mer, d'après le Répertoire National des Associations (RNA). Pour chaque commune : les associations classées par domaine (sport, culture, solidarité, environnement, éducation, patrimoine, vie locale), avec leur site internet et leurs réseaux sociaux quand ils ont été vérifiés.</p>
         <form action="/recherche" method="get" role="search" style="margin:24px 0">

@@ -6,13 +6,14 @@ $dir = $PSScriptRoot   # dossier du script (aucun chemin personnel en dur)
 $SERVER = (Get-Content "$dir\.serveur" -Raw).Trim()
 
 # 1) Tunnels SSH localhost-only vers ca-db (15433 verify, 5434 apply). 5433 et 5435 sont pris par
-#    des bases Docker locales (astro-app...) depuis 11/2026.
+#    des bases Docker locales d'autres projets depuis 11/2026.
 foreach ($p in 15433,5434) {
   $up = $false
   try { $c = New-Object Net.Sockets.TcpClient; $c.Connect('127.0.0.1', $p); $c.Close(); $up = $true } catch {}
   if (-not $up) {
-    $ip = '172.24.0.3'
+    $ip = $null   # adresse du conteneur ca-db, demandee au serveur (pas d'adresse en dur)
     try { $r = (ssh -o ConnectTimeout=10 $SERVER 'docker exec ca-db hostname -i').Trim().Split()[0]; if ($r -match '^\d{1,3}(\.\d{1,3}){3}$') { $ip = $r } } catch {}
+    if (-not $ip) { continue }   # serveur injoignable : on reessaiera au prochain passage
     Start-Process -WindowStyle Hidden ssh -ArgumentList '-N','-o','ServerAliveInterval=30','-o','ServerAliveCountMax=3','-o','ExitOnForwardFailure=yes','-L',"127.0.0.1:${p}:${ip}:5432",$SERVER
   }
 }

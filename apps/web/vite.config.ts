@@ -17,7 +17,8 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      "/api": { target: "http://localhost:3000", changeOrigin: true },
+      // API_PROXY=https://carteasso.fr pour tester le front contre la production (lecture seule).
+      "/api": { target: process.env.API_PROXY || "http://localhost:3000", changeOrigin: true },
     },
   },
 });

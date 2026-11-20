@@ -1,15 +1,13 @@
 /**
  * MapView : l'écran principal de la carte interactive.
  * On affiche une carte Leaflet (librairie de cartes web) avec les associations
- * d'un département, regroupées en "clusters" (paquets de points proches), plus
+ * d'un département, regroupées en "clusters" (paquets de points proches, Supercluster), plus
  * une barre de recherche et des filtres par catégorie.
  * Cliquer sur un point ouvre la fiche détaillée de l'association (AssoSheet).
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
-import "leaflet.markercluster";
-import "leaflet.markercluster/dist/MarkerCluster.css";
-// Pas de MarkerCluster.Default.css : on stylise nous-mêmes les clusters (voir iconCreateFunction).
+import Supercluster, { type ClusterProperties } from "supercluster";
 import { api, type Association, type GeoPoint, type Suggestion } from "../lib/api";
 import { CATEGORIES, catById } from "../lib/categories";
 import { Logo } from "../components/Logo";
@@ -18,6 +16,16 @@ import { SearchBar } from "../components/SearchBar";
 import { AssoSheet } from "../components/AssoSheet";
 import type { ExploreOpts } from "./Landing";
 import type { DeptMeta } from "../data/departements";
+
+// Regroupement des points : au-delà de ce zoom, les associations ne sont plus regroupées
+// (sauf celles posées exactement au même endroit, qu'un clic liste).
+const CLUSTER_MAX_ZOOM = 16;
+const CAT_IDS = CATEGORIES.map((c) => c.id);
+type PinProps = { id: string; name: string; city: string; cat: string; approx: boolean };
+type CatCounts = Record<string, number>;
+const emptyCounts = (): CatCounts => Object.fromEntries(CAT_IDS.map((k) => [k, 0]));
+/** Échappe le texte inséré dans le HTML des marqueurs (noms venus du registre). */
+const esc = (t: string) => t.replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]!));
 
 // Barre de filtres : une pastille cliquable par catégorie. Cliquer active/désactive
 // le filtre. Un bouton "Tout afficher" apparait dès qu'au moins un filtre est actif.
@@ -87,7 +95,8 @@ export function MapView({ initial, onHome, onPortal, dept }: {
   // Références (valeurs gardées entre les rendus, sans redessiner l'écran) :
   const mapRef = useRef<L.Map | null>(null);                                    // l'objet carte Leaflet
   const mapElRef = useRef<HTMLDivElement>(null);                                // la balise HTML qui contient la carte
-  const clusterRef = useRef<L.MarkerClusterGroup | null>(null);                 // le groupe de marqueurs clusterisés
+  const layerRef = useRef<L.LayerGroup | null>(null);                           // les paquets et points dessinés
+  const [loading, setLoading] = useState(true);                                 // points du département en cours de chargement
   const didFitRef = useRef(false);                                              // recentrage initial déjà fait ?
 
   /* ---- points carte : chargés UNE FOIS par département (fluide ensuite, pas de
@@ -95,7 +104,9 @@ export function MapView({ initial, onHome, onPortal, dept }: {
           le coût ; le rendu « marqueurs visibles seulement » garde le zoom fluide. ---- */
   useEffect(() => {
     didFitRef.current = false;
-    api.geojson({ located: true, department: dept?.code }).then(setPoints).catch(() => setPoints([]));
+    setLoading(true);
+    api.geojson({ located: true, department: dept?.code })
+      .then(setPoints).catch(() => setPoints([])).finally(() => setLoading(false));
   }, [dept?.code]);
 
 
@@ -217,7 +228,8 @@ export function MapView({ initial, onHome, onPortal, dept }: {
   // Le `return () => map.remove()` nettoie la carte quand on quitte l'écran.
   useEffect(() => {
     if (mapRef.current || !mapElRef.current) return;
-    const map = L.map(mapElRef.current, { center: [46.67, -1.43], zoom: 9, zoomControl: false, scrollWheelZoom: true });
+    // Vue de départ : la France entière (et plus la Vendée), recadrée dès l'arrivée des points.
+    const map = L.map(mapElRef.current, { center: [46.6, 2.4], zoom: 6, zoomControl: false, scrollWheelZoom: true });
     L.control.zoom({ position: "bottomright", zoomInTitle: "Agrandir", zoomOutTitle: "Réduire" }).addTo(map);
     // Fond de carte OpenStreetMap standard (osm.org) : rapide, fiable et jamais bloqué
     // par les bloqueurs de pub (contrairement aux CDN type cartocdn). Bien plus réactif
@@ -231,99 +243,131 @@ export function MapView({ initial, onHome, onPortal, dept }: {
     return () => { map.remove(); mapRef.current = null; };
   }, []);
 
-  /* ---- (re)construit les marqueurs (clusterisés) quand les points filtrés changent ---- */
-  // À chaque changement de filtre, on vide puis recrée tous les marqueurs sur la carte.
-  // Les marqueurs proches sont regroupés en "clusters" (paquets) pour ne pas surcharger l'écran.
-  useEffect(() => {
+  /* ---- regroupement des points (Supercluster) ----
+     Avant le 20/11/2026 : leaflet.markercluster fabriquait UN marqueur Leaflet par association
+     (jusqu'à 20 000 par département) puis les regroupait dans le navigateur : plusieurs
+     secondes sur ordinateur, 20 s et plus sur téléphone, carte vide pendant ce temps.
+     Supercluster range les points dans un index en une fraction de seconde ; à chaque
+     déplacement on ne dessine QUE les paquets et points visibles (quelques centaines). */
+  const index = useMemo(() => {
+    const sc = new Supercluster<PinProps, CatCounts>({
+      radius: 56,
+      maxZoom: CLUSTER_MAX_ZOOM,
+      // Compteurs PLATS par catégorie (un objet imbriqué serait partagé entre paquets :
+      // Supercluster ne fait qu'une copie superficielle avant d'appeler reduce).
+      map: (p) => { const o = emptyCounts(); o[p.cat] = 1; return o; },
+      reduce: (acc, p) => { for (const k of CAT_IDS) acc[k] = (acc[k] ?? 0) + (p[k] ?? 0); },
+    });
+    sc.load(filteredPoints.map((p) => ({
+      type: "Feature" as const,
+      geometry: { type: "Point" as const, coordinates: [p.lng, p.lat] },
+      properties: { id: p.id, name: p.name, city: p.city ?? "", cat: p.categoryId, approx: !!p.approx },
+    })));
+    return sc;
+  }, [filteredPoints]);
+
+  // Dessine les paquets et les points visibles dans la vue actuelle.
+  const render = useCallback(() => {
     const map = mapRef.current;
     if (!map) return;
+    if (!layerRef.current) layerRef.current = L.layerGroup().addTo(map);
+    const layer = layerRef.current;
+    layer.clearLayers();
+    const b = map.getBounds().pad(0.2); // une marge : pas de trou en bord d'écran pendant un glissé
+    const zoom = Math.round(map.getZoom());
+    const feats = index.getClusters([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()], zoom);
 
-    // On crée le groupe de clusters une seule fois (à la première exécution).
-    if (!clusterRef.current) {
-      clusterRef.current = L.markerClusterGroup({
-        chunkedLoading: true,
-        // Ne garde dans le DOM que les marqueurs DANS la vue -> indispensable avec
-        // des dizaines de milliers de points (zoom/pan fluide même à l'échelle nationale).
-        removeOutsideVisibleBounds: true,
-        showCoverageOnHover: false,
-        maxClusterRadius: 56,
-        spiderfyOnMaxZoom: true,
-        // Pastille plate colorée par la catégorie DOMINANTE des assos du cluster.
-        // Dessine la pastille d'un cluster : on compte les catégories des assos qu'il contient
-        // et on le colore avec la catégorie la plus présente. La taille grandit avec le nombre.
-        iconCreateFunction: (cluster) => {
-          // tally = compteur "catégorie -> nombre d'assos de cette catégorie dans le cluster".
-          const tally: Record<string, number> = {};
-          for (const m of cluster.getAllChildMarkers()) {
-            const id = (m.options as { catId?: string }).catId;
-            if (id) tally[id] = (tally[id] ?? 0) + 1;
-          }
-          // On cherche la catégorie dominante (celle qui revient le plus souvent).
-          let domId = "";
-          let max = -1;
-          for (const id in tally) {
-            if (tally[id] > max) { max = tally[id]; domId = id; }
-          }
-          const color = domId ? catById(domId).color : "var(--ink-2)";
-          const n = cluster.getChildCount();
-          const size = n < 10 ? 32 : n < 100 ? 40 : n < 1000 ? 48 : 56;
-          const fs = n < 100 ? 13 : n < 1000 ? 12.5 : 11.5;
-          return L.divIcon({
+    for (const f of feats) {
+      const [lng, lat] = f.geometry.coordinates;
+      const props = f.properties as Partial<ClusterProperties> & PinProps & CatCounts;
+
+      if (props.cluster) {
+        // Paquet : pastille colorée par la catégorie DOMINANTE, taille selon le nombre.
+        let domId = ""; let max = -1;
+        for (const k of CAT_IDS) if ((props[k] ?? 0) > max) { max = props[k] ?? 0; domId = k; }
+        const color = domId ? catById(domId).color : "var(--ink-2)";
+        const n = props.point_count ?? 0;
+        const size = n < 10 ? 32 : n < 100 ? 40 : n < 1000 ? 48 : 56;
+        const fs = n < 100 ? 13 : n < 1000 ? 12.5 : 11.5;
+        const m = L.marker([lat, lng], {
+          icon: L.divIcon({
             className: "",
             html: `<div class="confetti-cluster" style="--cat:${color};width:${size}px;height:${size}px;font-size:${fs}px">${n}</div>`,
-            iconSize: [size, size],
-            iconAnchor: [size / 2, size / 2],
+            iconSize: [size, size], iconAnchor: [size / 2, size / 2],
+          }),
+        });
+        const id = props.cluster_id as number;
+        m.on("click", () => {
+          const z = index.getClusterExpansionZoom(id);
+          if (z <= CLUSTER_MAX_ZOOM) { map.flyTo([lat, lng], z, { duration: 0.5 }); return; }
+          // Associations au MÊME endroit (souvent le centre de la commune) : on les liste.
+          const leaves = index.getLeaves(id, 60) as { properties: PinProps }[];
+          const html = `<div class="cm-pop-inner"><div class="pp-cat">${n} associations ici</div>` +
+            leaves.map((l) => `<a href="#" class="pp-name" data-id="${l.properties.id}" style="display:block;margin:4px 0">${esc(l.properties.name)}</a>`).join("") +
+            (n > leaves.length ? `<div class="pp-city">… et ${n - leaves.length} autres : zoomez ou filtrez</div>` : "") + `</div>`;
+          const pop = L.popup({ className: "cm-pop", maxHeight: 280, autoPan: true }).setLatLng([lat, lng]).setContent(html).openOn(map);
+          pop.getElement()?.addEventListener("click", (ev) => {
+            const a = (ev.target as HTMLElement).closest("a[data-id]") as HTMLElement | null;
+            if (!a) return;
+            ev.preventDefault();
+            map.closePopup();
+            void openById(a.dataset.id!);
           });
-        },
-      });
-      map.addLayer(clusterRef.current);
-    }
-    const group = clusterRef.current;
-    group.clearLayers(); // on enlève les anciens marqueurs avant de remettre les nouveaux
+        });
+        layer.addLayer(m);
+        continue;
+      }
 
-    // Pour chaque point, on fabrique un marqueur coloré selon sa catégorie,
-    // avec une mini-fiche (popup) au survol et l'ouverture de la fiche au clic.
-    const markers = filteredPoints.map((p) => {
-      const c = catById(p.categoryId);
-      const icon = L.divIcon({
-        className: "",
-        html: `<div class="confetti-pin" data-id="${p.id}" style="--cat:${c.color}${p.approx ? ";opacity:.45" : ""}"><span class="pin-dot"></span></div>`,
-        iconSize: [30, 30], iconAnchor: [15, 15],
+      // Point seul : même pastille qu'avant, mini-fiche au survol, fiche complète au clic.
+      const c = catById(props.cat);
+      const marker = L.marker([lat, lng], {
+        icon: L.divIcon({
+          className: "",
+          html: `<div class="confetti-pin" data-id="${props.id}" style="--cat:${c.color}${props.approx ? ";opacity:.45" : ""}"><span class="pin-dot"></span></div>`,
+          iconSize: [30, 30], iconAnchor: [15, 15],
+        }),
       });
-      const marker = L.marker([p.lat, p.lng], { icon });
-      (marker.options as Record<string, unknown>).catId = p.categoryId; // pour la couleur du cluster
-
-      // Popup PARESSEUSE : on ne construit la mini-fiche qu'au 1er survol (au lieu de
-      // la générer pour des dizaines de milliers de marqueurs d'emblée).
       marker.on("mouseover", () => {
         if (!marker.getPopup()) {
           const popHtml =
             `<div class="cm-pop-inner" style="--cat:${c.color}">` +
             `<div class="pp-cat">${c.label}</div>` +
-            `<div class="pp-name">${p.name}</div>` +
-            `<div class="pp-city"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.3-7-11a7 7 0 0 1 14 0c0 4.7-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>${p.city ?? ""}</div>` +
+            `<div class="pp-name">${esc(props.name)}</div>` +
+            `<div class="pp-city"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.3-7-11a7 7 0 0 1 14 0c0 4.7-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>${esc(props.city)}</div>` +
             `</div>`;
           marker.bindPopup(popHtml, { className: "cm-pop", closeButton: false, offset: [0, -6], autoPan: false });
         }
         marker.openPopup();
       });
       marker.on("mouseout", () => marker.closePopup());
-      marker.on("click", () => void openById(p.id));
-      return marker;
-    });
-    group.addLayers(markers);
-
-    // Recentre la carte sur les points du territoire, UNE seule fois (sauf si on ouvre
-    // une asso précise depuis l'accueil). Permet d'arriver bien cadré sur n'importe quel
-    // département (ex. Occitanie au sud), pas seulement la Vendée.
-    if (!didFitRef.current && !initial.open && filteredPoints.length > 0) {
-      didFitRef.current = true;
-      map.fitBounds(
-        L.latLngBounds(filteredPoints.map((p) => [p.lat, p.lng] as [number, number])),
-        { padding: [40, 40], maxZoom: 12, animate: false },
-      );
+      marker.on("click", () => void openById(props.id));
+      layer.addLayer(marker);
     }
-  }, [filteredPoints, openById, initial.open]);
+  }, [index, openById]);
+
+  // Redessine à chaque fin de déplacement ou de zoom, et quand l'index change (filtres).
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    render();
+    map.on("moveend", render);
+    return () => { map.off("moveend", render); };
+  }, [render]);
+
+  // Cadre la carte sur le département DÈS que ses points arrivent (une seule fois, sauf si
+  // on ouvre une asso précise depuis l'accueil) : avant, la carte restait sur la Vendée
+  // jusqu'à la fin de la construction des marqueurs.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || didFitRef.current || initial.open || points.length === 0) return;
+    didFitRef.current = true;
+    // Cadre sur 96 % des points : quelques fiches mal géolocalisées (à l'autre bout de la
+    // France) élargissaient le cadre à tout le pays (constaté sur le Loiret).
+    const lats = points.map((p) => p.lat).sort((a, b) => a - b);
+    const lngs = points.map((p) => p.lng).sort((a, b) => a - b);
+    const q = (arr: number[], f: number) => arr[Math.min(arr.length - 1, Math.max(0, Math.floor(f * (arr.length - 1))))];
+    map.fitBounds([[q(lats, 0.02), q(lngs, 0.02)], [q(lats, 0.98), q(lngs, 0.98)]], { padding: [40, 40], maxZoom: 12, animate: false });
+  }, [points, initial.open]);
 
   /* ---- ouverture initiale (depuis la landing) ---- */
   // Si la page d'accueil a demandé d'ouvrir une asso précise, on le fait une seule fois,
@@ -397,6 +441,13 @@ export function MapView({ initial, onHome, onPortal, dept }: {
       <div style={{ flex: 1, display: "flex", minHeight: 0, position: "relative" }}>
         <div style={{ flex: 1, position: "relative", minWidth: 0 }}>
           <div ref={mapElRef} style={{ position: "absolute", inset: 0 }} />
+          {loading && (
+            <div role="status" style={{ position: "absolute", left: "50%", top: 16, transform: "translateX(-50%)", zIndex: 1000,
+              background: "var(--bg)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-pill)",
+              padding: "8px 16px", fontWeight: 700, fontSize: 13, boxShadow: "0 4px 14px rgba(0,0,0,.08)" }}>
+              Chargement des associations…
+            </div>
+          )}
           <AssoSheet asso={openAsso} onClose={() => setOpenAsso(null)} />
         </div>
       </div>
