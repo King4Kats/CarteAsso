@@ -54,6 +54,9 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
       SMTP_PORT: ${SMTP_PORT:-587}
+      # Adresse d'expéditeur (domaine vérifié chez le fournisseur SMTP). Sans elle, l'API prend
+      # SMTP_USER, qui n'est pas une adresse chez Resend -> « 501 Bad sender address ».
+      SMTP_FROM: ${SMTP_FROM:-}
       CONTACT_EMAIL: ${CONTACT_EMAIL:-contact@example.com}
     # Données RNA montées depuis l'hôte (gros fichiers livrés sans reconstruire l'image).
     volumes:
