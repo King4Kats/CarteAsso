@@ -1,12 +1,14 @@
 /**
- * Routes SEO (HORS préfixe /api, voir main.ts) : pages indexables par Google.
+ * Routes SEO, servies par l'API sous /api/seo/… : nginx réécrit les URL propres (/vendee/challans)
+ * vers ces routes. Pages indexables par Google et lisibles par les assistants IA.
  *   GET /sitemap.xml          -> plan du site (toutes les communes, tous départements)
  *   GET /<departement>        -> index des communes du département (ex. /vendee, /lot)
  *   GET /<departement>/<commune> -> page d'une commune (liste des assos en HTML)
  *   GET /chiffres, /badge, /robots.txt, /llms.txt, /embed/<d>/<c>, /og/…png (voir plus bas)
  *
  * On renvoie directement la chaîne HTML/XML ; @Header fixe le bon Content-Type.
- * nginx ne route que les slugs de départements couverts vers l'API (le reste = SPA).
+ * nginx envoie TOUT chemin à 1 ou 2 segments vers l'API ; un slug inconnu (404) est rendu par
+ * l'application, avec le code 404 (deploy/nginx.conf).
  */
 import { Controller, Get, Header, NotFoundException, Param, Query, StreamableFile, UseGuards } from "@nestjs/common";
 import { RechercheRateLimitGuard } from "../common/recherche-rate-limit.guard";

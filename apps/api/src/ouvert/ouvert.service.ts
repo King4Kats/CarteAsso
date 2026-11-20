@@ -2,9 +2,9 @@
  * Service « ouvert » : la recherche d'associations telle que les IA (ChatGPT, Claude,
  * Perplexity…) et les autres outils peuvent l'utiliser SANS JavaScript ni carte.
  *
- * Une seule fonction de recherche, servie de trois façons :
+ * Une seule fonction de recherche, servie de deux façons (pas de serveur MCP : les assistants
+ * lisent des pages, décision du 20/11/2026) :
  *   - API JSON documentée : /api/v1/recherche, /api/v1/associations/<id> (+ /openapi.json) ;
- *   - serveur MCP : /mcp (outils « search », « fetch », « rechercher_associations ») ;
  *   - pages HTML : /recherche?q=…&lieu=… et /association/<id> (lisibles par un robot).
  *
  * Principe : « lieu » (commune ou code postal) est situé par la Base Adresse Nationale ;
@@ -214,7 +214,7 @@ export class OuvertService {
     return { q: q || null, lieu: lieu?.replace(/[?!.]+$/, "").trim() || null };
   }
 
-  /** LA recherche (utilisée par l'API, le serveur MCP et la page /recherche). */
+  /** LA recherche (utilisée par l'API v1 et la page /recherche). */
   async rechercher(p: ParamsRecherche): Promise<ResultatRecherche> {
     const limite = Math.min(Math.max(p.limite ?? 10, 1), 50);
     const q = p.q?.trim() || null;
