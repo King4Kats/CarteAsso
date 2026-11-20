@@ -5,7 +5,7 @@ RUN corepack enable
 WORKDIR /app
 COPY . .
 RUN pnpm install --no-frozen-lockfile \
- && pnpm --filter @gemenskarte/shared build \
- && pnpm --filter @gemenskarte/api build
+ && pnpm --filter @carteasso/shared build \
+ && pnpm --filter @carteasso/api build
 EXPOSE 3000
 CMD ["node", "apps/api/dist/main.js"]

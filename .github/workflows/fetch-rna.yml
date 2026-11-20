@@ -32,7 +32,7 @@ jobs:
       - name: Télécharger le fichier RNA waldec
         run: |
           set -euo pipefail
-          UA="Mozilla/5.0 (X11; Linux x86_64) GemensKarte-bot"
+          UA="Mozilla/5.0 (X11; Linux x86_64) CarteAsso-bot"
 
           find_csv() { # $1 = slug du dataset → imprime l'URL d'une ressource CSV waldec
             curl -fsSL -A "$UA" "https://www.data.gouv.fr/api/1/datasets/$1/" -o ds.json

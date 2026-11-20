@@ -1,5 +1,5 @@
 import os, psycopg
-dsn=os.environ.get("DATABASE_URL","postgres://gemenskarte:gemenskarte@localhost:5433/gemenskarte")
+dsn=os.environ.get("DATABASE_URL","postgres://carteasso:carteasso@localhost:5433/carteasso")
 with psycopg.connect(dsn) as c:
     r=c.execute("""
       SELECT count(*),

@@ -1,6 +1,6 @@
 /**
  * Catégories "confetti" — source de vérité partagée front/back.
- * Palette issue de la direction artistique GemensKarte (Claude Design) :
+ * Palette issue de la direction artistique CarteAsso (Claude Design) :
  * fond blanc, couleurs vives réservées aux badges/boutons/pins.
  * `onLight` = le texte du badge plein doit être sombre (couleur claire).
  */

@@ -3,12 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <title>GemensKarte — La carte des associations en France</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#e11567" />
+    <title>CarteAsso — La carte des associations en France</title>
     <meta name="description" content="La carte interactive et gratuite de toutes les associations de France : sport, culture, solidarité, environnement, éducation. Trouvez et contactez les assos de votre commune, partout en métropole et outre-mer." />
-    <meta name="keywords" content="associations France, carte des associations, annuaire associatif, association près de chez moi, association par commune, RNA, répertoire national des associations, bénévolat" />
-    <meta name="author" content="GemensKarte" />
-    <meta name="robots" content="index, follow" />
+    <meta name="author" content="CarteAsso" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
     
     <script>
       !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys getNextSurveyStep onSessionId setPersonProperties group updatePersonProperties set_config identify set_group set_group_properties reset reset_group register_group_properties group_properties_attributes capture_pageview capture_pageleave capture_pageleave capture_pageview_metrics capture_pageview_metrics capture_pageleave_metrics capture_pageleave_metrics capture_pageleave_metrics".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
@@ -16,35 +19,61 @@
         })
     </script>
 
-    <link rel="canonical" href="https://gemenskarte.fr/" />
+    <link rel="canonical" href="%VITE_SITE_URL%/" />
 
     <!-- Aperçu lors d'un partage (Facebook, LinkedIn, etc.) -->
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="GemensKarte" />
+    <meta property="og:site_name" content="CarteAsso" />
     <meta property="og:locale" content="fr_FR" />
-    <meta property="og:title" content="GemensKarte — La carte des associations en France" />
+    <meta property="og:title" content="CarteAsso — La carte des associations en France" />
     <meta property="og:description" content="La carte interactive de toutes les associations de France : sport, culture, solidarité, environnement… Trouvez et contactez les assos de votre commune. Gratuit." />
-    <meta property="og:url" content="https://gemenskarte.fr/" />
-    <meta property="og:image" content="https://gemenskarte.fr/og-image.png" />
+    <meta property="og:url" content="%VITE_SITE_URL%/" />
+    <meta property="og:image" content="%VITE_SITE_URL%/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="GemensKarte — la carte des associations" />
+    <meta property="og:image:alt" content="CarteAsso — la carte des associations" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="GemensKarte — La carte des associations en France" />
+    <meta name="twitter:title" content="CarteAsso — La carte des associations en France" />
     <meta name="twitter:description" content="La carte interactive de toutes les associations de France. Sport, culture, solidarité… Gratuit." />
-    <meta name="twitter:image" content="https://gemenskarte.fr/og-image.png" />
+    <meta name="twitter:image" content="%VITE_SITE_URL%/og-image.png" />
 
     <!-- Données structurées (aide Google à comprendre le site) -->
     <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "GemensKarte",
-        "alternateName": "La carte des associations",
-        "url": "https://gemenskarte.fr/",
-        "description": "La carte interactive de toutes les associations de France (métropole et outre-mer).",
-        "inLanguage": "fr-FR"
-      }
+      [
+        {
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          "@id": "%VITE_SITE_URL%/#org",
+          "name": "CarteAsso",
+          "url": "%VITE_SITE_URL%/",
+          "logo": { "@type": "ImageObject", "url": "%VITE_SITE_URL%/icon-512.png", "width": 512, "height": 512 },
+          "description": "Carte interactive et gratuite de toutes les associations de France, à partir du Répertoire National des Associations (RNA).",
+          "sameAs": ["https://github.com/King4Kats/CarteAsso"]
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          "@id": "%VITE_SITE_URL%/#site",
+          "name": "CarteAsso",
+          "alternateName": ["Carte Asso", "La carte des associations"],
+          "url": "%VITE_SITE_URL%/",
+          "description": "La carte interactive de toutes les associations de France (métropole et outre-mer).",
+          "inLanguage": "fr-FR",
+          "publisher": { "@id": "%VITE_SITE_URL%/#org" }
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "Dataset",
+          "name": "Associations de France géolocalisées et enrichies",
+          "description": "Toutes les associations actives de France (RNA), géolocalisées, classées par domaine et enrichies de leur site web et réseaux sociaux vérifiés.",
+          "url": "%VITE_SITE_URL%/chiffres",
+          "license": "https://www.etalab.gouv.fr/licence-ouverte-open-licence/",
+          "isAccessibleForFree": true,
+          "creator": { "@id": "%VITE_SITE_URL%/#org" },
+          "spatialCoverage": { "@type": "Place", "name": "France" },
+          "isBasedOn": "https://www.data.gouv.fr/fr/datasets/repertoire-national-des-associations/"
+        }
+      ]
     </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />

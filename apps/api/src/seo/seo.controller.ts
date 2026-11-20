@@ -3,11 +3,12 @@
  *   GET /sitemap.xml          -> plan du site (toutes les communes, tous départements)
  *   GET /<departement>        -> index des communes du département (ex. /vendee, /lot)
  *   GET /<departement>/<commune> -> page d'une commune (liste des assos en HTML)
+ *   GET /chiffres, /badge, /robots.txt, /llms.txt, /embed/<d>/<c>, /og/…png (voir plus bas)
  *
  * On renvoie directement la chaîne HTML/XML ; @Header fixe le bon Content-Type.
  * nginx ne route que les slugs de départements couverts vers l'API (le reste = SPA).
  */
-import { Controller, Get, Header, NotFoundException, Param } from "@nestjs/common";
+import { Controller, Get, Header, NotFoundException, Param, StreamableFile } from "@nestjs/common";
 import { SeoService } from "./seo.service";
 
 // Préfixe "seo" -> routes réelles /api/seo/... ; nginx réécrit les URL propres
@@ -35,6 +36,63 @@ export class SeoController {
   @Header("Content-Type", "text/html; charset=utf-8")
   territoires(): Promise<string> {
     return this.svc.rootIndex();
+  }
+
+  // ── Pages et fichiers « fixes », déclarés AVANT :dept pour ne pas être avalés ──
+
+  @Get("robots.txt")
+  @Header("Content-Type", "text/plain; charset=utf-8")
+  robots(): string {
+    return this.svc.robots();
+  }
+
+  @Get("llms.txt")
+  @Header("Content-Type", "text/plain; charset=utf-8")
+  @Header("Cache-Control", "public, max-age=3600")
+  llms(): Promise<string> {
+    return this.svc.llms();
+  }
+
+  @Get("chiffres")
+  @Header("Content-Type", "text/html; charset=utf-8")
+  chiffres(): Promise<string> {
+    return this.svc.chiffresPage();
+  }
+
+  @Get("badge")
+  @Header("Content-Type", "text/html; charset=utf-8")
+  badge(): string {
+    return this.svc.badgePage();
+  }
+
+  // Liste intégrable (iframe) d'une commune. nginx lève l'interdiction d'iframe
+  // UNIQUEMENT sur /embed/ (voir deploy/nginx.conf).
+  @Get("embed/:dept/:slug")
+  @Header("Content-Type", "text/html; charset=utf-8")
+  async embed(@Param("dept") dept: string, @Param("slug") slug: string): Promise<string> {
+    const html = await this.svc.embedCommune(dept, slug);
+    if (!html) throw new NotFoundException("Commune introuvable");
+    return html;
+  }
+
+  // Images de partage : /og/chiffres.png, /og/<dept>.png, /og/<dept>/<slug>.png
+  @Get("og/:a")
+  @Header("Content-Type", "image/png")
+  @Header("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800")
+  async og1(@Param("a") a: string): Promise<StreamableFile> {
+    return this.png(await this.svc.ogImage(a.replace(/\.png$/, "")));
+  }
+
+  @Get("og/:a/:b")
+  @Header("Content-Type", "image/png")
+  @Header("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800")
+  async og2(@Param("a") a: string, @Param("b") b: string): Promise<StreamableFile> {
+    return this.png(await this.svc.ogImage(a, b.replace(/\.png$/, "")));
+  }
+
+  private png(buf: Buffer | null): StreamableFile {
+    if (!buf) throw new NotFoundException("Image introuvable");
+    return new StreamableFile(buf);
   }
 
   @Get(":dept")

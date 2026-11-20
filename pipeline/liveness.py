@@ -38,7 +38,7 @@ import httpx
 import psycopg
 
 DSN = os.environ.get(
-    "DATABASE_URL", "postgres://gemenskarte:gemenskarte@localhost:5433/gemenskarte"
+    "DATABASE_URL", "postgres://carteasso:carteasso@localhost:5433/carteasso"
 )
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/124.0 Safari/537.36")

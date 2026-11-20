@@ -21,7 +21,7 @@ import sys
 import psycopg
 
 DSN = os.environ.get(
-    "DATABASE_URL", "postgres://gemenskarte:gemenskarte@localhost:5433/gemenskarte"
+    "DATABASE_URL", "postgres://carteasso:carteasso@localhost:5433/carteasso"
 )
 CONNECT_TIMEOUT = 10
 STATEMENT_TIMEOUT_MS = 60000
@@ -49,7 +49,7 @@ SQL = """SELECT EXISTS(
 
 
 def main() -> int:
-    raw = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("GK_TARGETS", "85")
+    raw = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("CA_TARGETS", "85")
     current = sys.argv[2].strip() if len(sys.argv) > 2 else ""
     targets = [t.strip() for t in raw.replace(";", ",").split(",") if t.strip()]
     if not targets:

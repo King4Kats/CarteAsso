@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Superviseur de recherche GemensKarte (tourne sur un VPS, 24/7). Lit .passes et maintient
+# Superviseur de recherche CarteAsso (tourne sur un VPS, 24/7). Lit .passes et maintient
 # une boucle par passe. Chaque VPS scrape depuis SA propre IP (pas de proxy). La DB maison
 # est jointe via le tunnel inverse (localhost:55432, voir .env DATABASE_URL).
 #
@@ -8,7 +8,7 @@
 cd "$(dirname "$0")" || exit 1
 
 # Une seule instance (le keepalive cron peut relancer ; flock garantit l'unicite).
-exec 9>/tmp/gk-runner.lock
+exec 9>/tmp/ca-runner.lock
 flock -n 9 || exit 0
 
 set -a; . ./.env 2>/dev/null; set +a   # DATABASE_URL
@@ -23,16 +23,16 @@ run_pass() { # $1=label $2=moteur $3..=script+args
     d=$(timeout 70 .venv/bin/python target_dept.py "$TARGETS" "$dept" </dev/null 2>/dev/null | tail -1)
     [[ "$d" =~ ^[0-9]+$ ]] && dept=$d
     local args=${raw//\{DEPT\}/$dept}
-    GK_DDGS_BACKEND="$backend" timeout 2400 .venv/bin/python $args </dev/null >> "_${label}.log" 2>&1
+    CA_DDGS_BACKEND="$backend" timeout 2400 .venv/bin/python $args </dev/null >> "_${label}.log" 2>&1
     sleep 30
   done
 }
 
-# Battement de coeur machine -> table pipeline_heartbeat (id = GK_HB_ID, mis dans .env :
-# 2 = VPS 1, 3 = VPS 2). gk-watch (serveur maison) alerte si battement absent
+# Battement de coeur machine -> table pipeline_heartbeat (id = CA_HB_ID, mis dans .env :
+# 2 = VPS 1, 3 = VPS 2). ca-watch (serveur maison) alerte si battement absent
 # (VPS cense etre 24/7) ou si une passe est figee (log sans ecriture depuis > 40 min).
 hb_loop() {
-  [ -z "$GK_HB_ID" ] && return 0
+  [ -z "$CA_HB_ID" ] && return 0
   local lbl lf age issues host
   host=$(hostname)
   while true; do
@@ -49,7 +49,7 @@ hb_loop() {
       fi
     done < .passes
     printf '{"host":"%s","issues":[%s]}' "$host" "${issues%,}" \
-      | timeout 60 .venv/bin/python heartbeat.py --id "$GK_HB_ID" >/dev/null 2>&1
+      | timeout 60 .venv/bin/python heartbeat.py --id "$CA_HB_ID" >/dev/null 2>&1
     sleep 120
   done
 }

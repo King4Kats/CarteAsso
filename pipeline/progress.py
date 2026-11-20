@@ -15,7 +15,7 @@ import os
 import psycopg
 
 DSN = os.environ.get(
-    "DATABASE_URL", "postgres://gemenskarte:gemenskarte@localhost:5433/gemenskarte"
+    "DATABASE_URL", "postgres://carteasso:carteasso@localhost:5433/carteasso"
 )
 
 # Pour chaque plateforme : la clé dans `social`, le marqueur d'idempotence posé par la passe, et

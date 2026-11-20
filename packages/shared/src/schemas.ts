@@ -10,7 +10,7 @@
 import { z } from "zod";
 import { CATEGORY_IDS } from "./categories";
 
-/** Régions couvertes par GemensKarte. */
+/** Régions couvertes par CarteAsso. */
 export const REGIONS = ["Bretagne", "Pays de la Loire", "Normandie"] as const;
 
 /** Statut de publication d'une fiche. */

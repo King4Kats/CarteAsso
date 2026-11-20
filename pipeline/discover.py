@@ -9,7 +9,7 @@ Reprenable : commit par ligne.
 Usage:
   python discover.py [--limit N] [--offset N] [--dept 85] [--redo] [--dry-run] [--sleep 1.5]
 
-Env: DATABASE_URL (défaut: tunnel local postgres://gemenskarte:gemenskarte@localhost:5433/gemenskarte)
+Env: DATABASE_URL (défaut: tunnel local postgres://carteasso:carteasso@localhost:5433/carteasso)
 """
 
 from __future__ import annotations
@@ -30,28 +30,28 @@ from departements import nom_departement
 from lib_match import classify
 
 DSN = os.environ.get(
-    "DATABASE_URL", "postgres://gemenskarte:gemenskarte@localhost:5433/gemenskarte"
+    "DATABASE_URL", "postgres://carteasso:carteasso@localhost:5433/carteasso"
 )
 
 
 # Moteurs de recherche et proxy de sortie pilotes par variables d'environnement,
 # positionnees par le superviseur (une combinaison distincte par passe) pour ne pas
 # saturer un meme (moteur x IP). Aucune info d'infra n'est codee en dur ici :
-#   GK_DDGS_BACKEND = liste de moteurs separes par des virgules (rotation au retry)
-#   GK_DDGS_PROXY   = proxy SOCKS/HTTP optionnel (sortie par une autre IP), sinon vide
-_BACKENDS = [b.strip() for b in os.environ.get("GK_DDGS_BACKEND", "auto").split(",") if b.strip()] or ["auto"]
-_PROXY = os.environ.get("GK_DDGS_PROXY", "").strip() or None
+#   CA_DDGS_BACKEND = liste de moteurs separes par des virgules (rotation au retry)
+#   CA_DDGS_PROXY   = proxy SOCKS/HTTP optionnel (sortie par une autre IP), sinon vide
+_BACKENDS = [b.strip() for b in os.environ.get("CA_DDGS_BACKEND", "auto").split(",") if b.strip()] or ["auto"]
+_PROXY = os.environ.get("CA_DDGS_PROXY", "").strip() or None
 # Timeout HTTP : plus large derriere un proxy (latence SSH/SOCKS). Sinon une requete lente
 # expire et est rejouee 4x -> requetes gaspillees (et ce flot de retries peut ressembler a
-# de l'abus cote moteur). Surchargeable via GK_DDGS_TIMEOUT.
-_TIMEOUT = int(os.environ.get("GK_DDGS_TIMEOUT", "20" if _PROXY else "10"))
+# de l'abus cote moteur). Surchargeable via CA_DDGS_TIMEOUT.
+_TIMEOUT = int(os.environ.get("CA_DDGS_TIMEOUT", "20" if _PROXY else "10"))
 
 
-# Cooldown moteur : si un moteur renvoie un rate-limit, on l'EVITE pendant GK_DDGS_COOLDOWN
+# Cooldown moteur : si un moteur renvoie un rate-limit, on l'EVITE pendant CA_DDGS_COOLDOWN
 # secondes (au lieu de le marteler) et on bascule sur le suivant de la liste. L'etat est
 # par-processus (chaque lot relance python), ce qui suffit : un lot fait des centaines de
 # requetes, et la pause inter-lots fait office de reset.
-_COOLDOWN = int(os.environ.get("GK_DDGS_COOLDOWN", "180"))
+_COOLDOWN = int(os.environ.get("CA_DDGS_COOLDOWN", "180"))
 _blocked: dict[str, float] = {}  # moteur -> instant (epoch) jusqu'auquel on l'evite
 
 

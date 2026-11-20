@@ -9,6 +9,6 @@ export class HealthController {
   // @Get() = répond aux requêtes GET (simple consultation) sur l'adresse /health.
   @Get()
   health(): { status: "ok"; service: string; time: string } {
-    return { status: "ok", service: "gemenskarte-api", time: new Date().toISOString() };
+    return { status: "ok", service: "carteasso-api", time: new Date().toISOString() };
   }
 }

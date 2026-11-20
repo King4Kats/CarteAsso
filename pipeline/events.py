@@ -34,7 +34,7 @@ import psycopg
 
 from lib_match import tokens
 
-DSN = os.environ.get("DATABASE_URL", "postgres://gemenskarte:gemenskarte@localhost:5433/gemenskarte")
+DSN = os.environ.get("DATABASE_URL", "postgres://carteasso:carteasso@localhost:5433/carteasso")
 ODS = ("https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/"
        "evenements-publics-openagenda/records")
 # Centroïde Vendée + rayon englobant tout le département (avec marge).
@@ -202,7 +202,7 @@ def main() -> int:
         # On centre la requête OpenAgenda sur le département traité (sinon, hors Vendée,
         # aucun événement n'est dans le rayon -> 0 partout). Repli sur la Vendée si pas de dept.
         center = (dept_centroid(conn, args.dept) or VENDEE) if args.dept else VENDEE
-        with httpx.Client(headers={"User-Agent": "GemensKarte/1.0"}) as client:
+        with httpx.Client(headers={"User-Agent": "CarteAsso/1.0"}) as client:
             events = fetch_all_events(client, center=center)
         print(f"  {len(events)} événements à venir récupérés (≈{(len(events)//100)+1} appels API).", flush=True)
         # ROBUSTESSE : 0 événement pour TOUT un département = quasi toujours une panne/limite

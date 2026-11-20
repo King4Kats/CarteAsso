@@ -27,7 +27,7 @@ async function bootstrap(): Promise<void> {
   app.enableShutdownHooks();
 
   await app.listen(env.PORT); // démarre l'écoute des requêtes sur le port choisi
-  new Logger("Bootstrap").log(`🎉 GemensKarte API → http://localhost:${env.PORT}/api`);
+  new Logger("Bootstrap").log(`🎉 CarteAsso API → http://localhost:${env.PORT}/api`);
 }
 
 // On lance le démarrage. "void" indique qu'on ignore volontairement la promesse renvoyée.

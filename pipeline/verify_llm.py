@@ -31,7 +31,7 @@ import trafilatura
 from readability import Document
 
 DSN = os.environ.get(
-    "DATABASE_URL", "postgres://gemenskarte:gemenskarte@localhost:5433/gemenskarte"
+    "DATABASE_URL", "postgres://carteasso:carteasso@localhost:5433/carteasso"
 )
 OLLAMA_HOST = "http://127.0.0.1:11434"
 DEFAULT_MODEL = os.environ.get("VERIFY_MODEL", "gemma4:12b")

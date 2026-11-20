@@ -28,7 +28,7 @@ from discover import search_with_retry
 from lib_match import tokens, host_of, base_domain, normalize_social
 
 DSN = os.environ.get(
-    "DATABASE_URL", "postgres://gemenskarte:gemenskarte@localhost:5433/gemenskarte"
+    "DATABASE_URL", "postgres://carteasso:carteasso@localhost:5433/carteasso"
 )
 
 

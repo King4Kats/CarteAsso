@@ -1,5 +1,5 @@
 /**
- * Page d'accueil (landing) de GemensKarte.
+ * Page d'accueil (landing) de CarteAsso.
  * C'est la vitrine du site : grand titre, carte des départements pour choisir
  * un territoire, statistiques animées, explication de la qualité des données,
  * ressources utiles, appel aux dons et pied de page.
@@ -182,7 +182,7 @@ export function Landing({ onSelect, onExplore, onPortal, dept }: {
             </span>
           )}
           {/* Code source (lien + logo GitHub) — projet à code ouvert. */}
-          <a href="https://github.com/King4Kats/GemensKarte" target="_blank" rel="noopener noreferrer"
+          <a href="https://github.com/King4Kats/CarteAsso" target="_blank" rel="noopener noreferrer"
             aria-label="Code source sur GitHub" title="Code source sur GitHub"
             style={{ display: "inline-flex", alignItems: "center", justifyContent: "center",
               width: 34, height: 34, borderRadius: 10, color: "var(--ink)",
@@ -352,7 +352,7 @@ export function Landing({ onSelect, onExplore, onPortal, dept }: {
             Fait avec <span style={{ color: "#ff2d78", display: "inline-flex", verticalAlign: "middle" }}><Icon name="heart" size={30} stroke={2.2} /></span> en Vendée,<br />pour toutes les régions
           </h2>
           <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--ink-2)", margin: "0 0 20px" }}>
-            GemensKarte est un projet <strong>100&nbsp;% bénévole</strong>, né d'un constat simple&nbsp;:
+            CarteAsso est un projet <strong>100&nbsp;% bénévole</strong>, né d'un constat simple&nbsp;:
             trouver une association locale est souvent compliqué. Les annuaires sont éparpillés,
             les sites vieillissants, les données incomplètes.
           </p>
@@ -657,10 +657,10 @@ export function Landing({ onSelect, onExplore, onPortal, dept }: {
             <Icon name="heart" size={34} stroke={2.1} />
           </span>
           <h2 style={{ fontSize: "clamp(26px, 4vw, 40px)", fontWeight: 900, letterSpacing: "-0.035em", color: "var(--ink)", margin: "0 0 14px", lineHeight: 1.1 }}>
-            Soutenir GemensKarte
+            Soutenir CarteAsso
           </h2>
           <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--ink-2)", margin: "0 0 28px" }}>
-            GemensKarte est <strong>gratuit et entièrement bénévole</strong>. Mais derrière les coulisses,
+            CarteAsso est <strong>gratuit et entièrement bénévole</strong>. Mais derrière les coulisses,
             des robots tournent sans relâche — et ça a un coût&nbsp;: électricité, hébergement, noms de domaine,
             développement. Vos dons gardent le projet en vie et permettent d'aller plus loin. Merci pour chaque
             contribution.
@@ -684,7 +684,7 @@ export function Landing({ onSelect, onExplore, onPortal, dept }: {
       }}>
         <Logo size={26} />
         <p style={{ fontSize: 13, color: "var(--muted)", margin: 0 }}>
-          Projet bénévole · Vendée · Code ouvert
+          Projet bénévole · Toute la France · Code ouvert
         </p>
         <button onClick={() => setModal("deferencer")} style={{ fontSize: 13, color: "var(--muted)", background: "none", border: 0, cursor: "pointer", fontFamily: "var(--font)", padding: 0 }}>
           Déférencer une association
@@ -694,10 +694,16 @@ export function Landing({ onSelect, onExplore, onPortal, dept }: {
         <a href="/territoires" style={{ fontSize: 13, color: "var(--muted)", textDecoration: "none", fontWeight: 600, fontFamily: "var(--font)" }}>
           Associations par commune
         </a>
+        <a href="/chiffres" style={{ fontSize: 13, color: "var(--muted)", textDecoration: "none", fontWeight: 600, fontFamily: "var(--font)" }}>
+          Les associations en chiffres
+        </a>
+        <a href="/badge" style={{ fontSize: 13, color: "var(--muted)", textDecoration: "none", fontWeight: 600, fontFamily: "var(--font)" }}>
+          Badge pour votre asso
+        </a>
         {/* Licences des données (distinctes de la licence du code, PolyForm Noncommercial) :
-            RNA + enrichissements GemensKarte = Licence Ouverte 2.0 ; fond de carte = ODbL. */}
+            RNA + enrichissements CarteAsso = Licence Ouverte 2.0 ; fond de carte = ODbL. */}
         <p style={{ fontSize: 13, color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>
-          Données&nbsp;: RNA © Ministère de l'Intérieur et enrichissements GemensKarte, sous{" "}
+          Données&nbsp;: RNA © Ministère de l'Intérieur et enrichissements CarteAsso, sous{" "}
           <a href="https://www.etalab.gouv.fr/licence-ouverte-open-licence/" target="_blank" rel="noopener noreferrer license"
             style={{ color: "var(--muted)", fontWeight: 600 }}>
             Licence Ouverte 2.0
@@ -708,7 +714,7 @@ export function Landing({ onSelect, onExplore, onPortal, dept }: {
             OpenStreetMap
           </a>
           {" "}(ODbL) · Code&nbsp;:{" "}
-          <a href="https://github.com/King4Kats/GemensKarte/blob/main/LICENSE" target="_blank" rel="noopener noreferrer license"
+          <a href="https://github.com/King4Kats/CarteAsso/blob/main/LICENSE" target="_blank" rel="noopener noreferrer license"
             style={{ color: "var(--muted)", fontWeight: 600 }}>
             PolyForm Noncommercial
           </a>

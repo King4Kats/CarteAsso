@@ -1,4 +1,4 @@
-# GemensKarte — Documentation technique complète
+# CarteAsso — Documentation technique complète
 
 > Carte web interactive des associations françaises (à partir du RNA, le Répertoire
 > National des Associations), enrichie automatiquement (liens sociaux, site, agenda…).
@@ -34,7 +34,7 @@
 sur data.gouv.fr) sont **pauvres** : on a le nom, l'objet (description), l'adresse… mais
 **pas** les liens utiles (site web, Facebook, Instagram, page de dons HelloAsso).
 
-**Ce que fait GemensKarte** :
+**Ce que fait CarteAsso** :
 1. **Importe** le RNA dans une base de données et **géolocalise** chaque association
    (transforme l'adresse en coordonnées GPS pour la poser sur une carte).
 2. **Enrichit** automatiquement chaque fiche : des scripts cherchent les liens sur le web,
@@ -93,13 +93,13 @@ pipeline de scripts qui tourne sur un **PC local** (pas sur le serveur).
    │  SERVEUR (your-server) — Docker Compose            │
    │                                                     │
    │   ┌─────────┐   /api/*   ┌──────────┐               │
-   │   │ gk-web  │──────────► │  gk-api  │               │
+   │   │ ca-web  │──────────► │  ca-api  │               │
    │   │ (nginx) │            │ (NestJS) │               │
    │   │  React  │            └────┬─────┘               │
    │   └─────────┘                 │                     │
    │                     ┌─────────┼─────────┐           │
    │                ┌────▼────┐         ┌─────▼──────┐    │
-   │                │  gk-db  │         │ meilisearch│    │
+   │                │  ca-db  │         │ meilisearch│    │
    │                │ Postgres│         │ (recherche)│    │
    │                │ +PostGIS│         └────────────┘    │
    │                └────▲────┘                           │
@@ -124,7 +124,7 @@ pipeline de scripts qui tourne sur un **PC local** (pas sur le serveur).
 ## 4. Le dépôt (monorepo)
 
 ```
-GemensKarte/
+CarteAsso/
 ├── apps/
 │   ├── web/                 # LE SITE (React + Vite)
 │   │   └── src/
@@ -416,17 +416,17 @@ Après un import : penser à **réindexer Meilisearch** (`pnpm search:reindex`).
 
 | Service | Image | Rôle |
 |---|---|---|
-| `db` (gk-db) | postgis/postgis | la base PostgreSQL + PostGIS |
+| `db` (ca-db) | postgis/postgis | la base PostgreSQL + PostGIS |
 | `meilisearch` | getmeili/meilisearch | le moteur de recherche |
-| `api` (gk-api) | build `deploy/Dockerfile.api` | le backend NestJS |
-| `web` (gk-web) | build `deploy/Dockerfile.web` | nginx qui sert le site React **et** fait proxy `/api → gk-api` |
+| `api` (ca-api) | build `deploy/Dockerfile.api` | le backend NestJS |
+| `web` (ca-web) | build `deploy/Dockerfile.web` | nginx qui sert le site React **et** fait proxy `/api → ca-api` |
 
-Seul **gk-web** est exposé sur le LAN (`8088:80`). La base et Meili restent en réseau interne.
+Seul **ca-web** est exposé sur le LAN (`8088:80`). La base et Meili restent en réseau interne.
 
 ### Mise en ligne (Cloudflare Tunnel)
 
 Un conteneur **cloudflared** crée un tunnel sortant vers Cloudflare, qui sert
-`https://gemenskarte.fr` → gk-web. Aucun port ouvert sur internet côté serveur.
+`https://gemenskarte.fr` → ca-web. Aucun port ouvert sur internet côté serveur.
 Cloudflare **ne met pas en cache** les réponses `/api` (`cf-cache-status: DYNAMIC`) → les
 fiches sont toujours fraîches.
 
@@ -440,9 +440,9 @@ Tout est dans un fichier **`.env`** sur le serveur (chmod 600, **gitignoré**) :
 
 ```bash
 # 1) synchroniser le code source vers le serveur
-rsync -a apps/ your-server:/home/user/gemenskarte/apps/
+rsync -a apps/ your-server:/home/user/carteasso/apps/
 # 2) reconstruire + relancer le(s) conteneur(s) concerné(s)
-ssh your-server 'cd ~/gemenskarte && docker compose -f docker-compose.prod.yml build web api && \
+ssh your-server 'cd ~/carteasso && docker compose -f docker-compose.prod.yml build web api && \
                   docker compose -f docker-compose.prod.yml up -d web api'
 ```
 
@@ -470,12 +470,12 @@ vérifs côté backend Node. `fetch-rna.yml` : télécharge le RNA (mensuel ou s
  └───────────┬──────────────┘
              │  (lecture)
         ┌────▼─────┐         ┌─────────────┐
-        │  gk-api  │────────►│ Meilisearch │  (reindex pousse une copie cherchable)
+        │  ca-api  │────────►│ Meilisearch │  (reindex pousse une copie cherchable)
         │ (NestJS) │         └─────────────┘
         └────┬─────┘
              │ /api/*
         ┌────▼─────┐
-        │  gk-web  │  → le navigateur de l'utilisateur (gemenskarte.fr)
+        │  ca-web  │  → le navigateur de l'utilisateur (gemenskarte.fr)
         └──────────┘
 ```
 

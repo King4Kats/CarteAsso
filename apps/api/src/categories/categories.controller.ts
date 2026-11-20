@@ -5,7 +5,7 @@
  * catégories (sport, culture, etc.) avec leur couleur et leur emoji.
  */
 import { Controller, Get } from "@nestjs/common";
-import { CATEGORIES, type Category } from "@gemenskarte/shared";
+import { CATEGORIES, type Category } from "@carteasso/shared";
 
 // @Controller("categories") = toutes les routes de cette classe commencent par /api/categories
 @Controller("categories")

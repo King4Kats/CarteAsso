@@ -6,7 +6,7 @@ sur stdin (JSON). Le VPS lit cette ligne pour decider d'alerter : il ne le fait 
 battement est recent (PC allume) -> aucune fausse alerte la nuit quand le PC est eteint.
 
 Les VPS de recherche ecrivent AUSSI un battement, chacun sur SA ligne (--id 2 VPS 1,
---id 3 backup, defaut 1 = PC) : gk-watch les surveille separement (un VPS est 24/7,
+--id 3 backup, defaut 1 = PC) : ca-watch les surveille separement (un VPS est 24/7,
 son battement absent = probleme, contrairement au PC).
 
 Usage : echo '{"dept":"85","jobs":{...},"issues":[...]}' | python3 heartbeat.py [--id N]
@@ -18,7 +18,7 @@ import sys
 import psycopg
 
 DSN = os.environ.get(
-    "DATABASE_URL", "postgres://gemenskarte:gemenskarte@localhost:5434/gemenskarte"
+    "DATABASE_URL", "postgres://carteasso:carteasso@localhost:5434/carteasso"
 )
 
 

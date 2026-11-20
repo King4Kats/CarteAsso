@@ -24,7 +24,7 @@ from ddgs import DDGS
 from ddgs.exceptions import DDGSException, RatelimitException, TimeoutException
 
 DSN = os.environ.get(
-    "DATABASE_URL", "postgres://gemenskarte:gemenskarte@localhost:5432/gemenskarte"
+    "DATABASE_URL", "postgres://carteasso:carteasso@localhost:5432/carteasso"
 )
 
 # Domaines presse régionale Bretagne / Pays de la Loire / Normandie

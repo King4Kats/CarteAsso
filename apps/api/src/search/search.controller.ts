@@ -4,7 +4,7 @@
  * Ici une seule route : l'autocomplétion de la barre de recherche.
  */
 import { Controller, Get, Query } from "@nestjs/common";
-import { SuggestQuery, MatchQuery, type Suggestion } from "@gemenskarte/shared";
+import { SuggestQuery, MatchQuery, type Suggestion } from "@carteasso/shared";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
 import { SearchService } from "./search.service";
 

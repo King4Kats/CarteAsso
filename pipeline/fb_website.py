@@ -18,7 +18,7 @@ from discover import search_with_retry
 from departements import nom_departement
 from lib_match import host_of, base_domain, DIRECTORY_HOSTS, SOCIAL_HOSTS, tokens, strip_accents
 
-DSN = os.environ.get("DATABASE_URL", "postgres://gemenskarte:gemenskarte@localhost:5433/gemenskarte")
+DSN = os.environ.get("DATABASE_URL", "postgres://carteasso:carteasso@localhost:5433/carteasso")
 DOMAIN_RE = re.compile(r"\b([a-z0-9][a-z0-9-]{1,40}\.(?:fr|com|org|net|bzh|eu|info))\b", re.I)
 BAD_DOMAINS = set(SOCIAL_HOSTS) | DIRECTORY_HOSTS | {
     "google.com", "gstatic.com", "goo.gl", "bit.ly", "linktr.ee", "google.fr",

@@ -9,7 +9,7 @@ echo "▶️  Infra (PostGIS + Meilisearch)…"
 pnpm infra:up
 
 echo "▶️  Types partagés…"
-pnpm --filter @gemenskarte/shared build
+pnpm --filter @carteasso/shared build
 
 echo "▶️  Migrations + seed…"
 pnpm db:migrate

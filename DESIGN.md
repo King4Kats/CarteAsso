@@ -1,6 +1,6 @@
-# GemensKarte — Direction Artistique & UX
+# CarteAsso — Direction Artistique & UX
 
-> **GemensKarte** — *La carte du territoire de tes assos.*
+> **CarteAsso** — *La carte du territoire de tes assos.*
 > Le « Google Maps » joyeux des associations locales (Bretagne, Pays de la Loire, Normandie).
 
 ---

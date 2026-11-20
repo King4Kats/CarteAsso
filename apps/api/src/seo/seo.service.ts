@@ -10,11 +10,16 @@
  */
 import { Inject, Injectable } from "@nestjs/common";
 import { sql } from "drizzle-orm";
-import { CATEGORIES } from "@gemenskarte/shared";
+import { CATEGORIES } from "@carteasso/shared";
 import { DB, type Db } from "../db/db.module";
 import { SEO_DEPARTEMENTS, SEO_DEPT_CODES, SEO_CODE_BY_SLUG } from "./territoires";
+import { getEnv } from "../config/env";
+import { renderOg } from "./og-image";
 
-const BASE = "https://gemenskarte.fr";
+// Domaine public, réglable par SITE_URL (voir config/env.ts) : rien d'autre à changer
+// le jour de la bascule gemenskarte.fr -> carteasso.fr.
+export const BASE = getEnv().SITE_URL.replace(/\/+$/, "");
+export const HOST = new URL(BASE).host;
 const MAX_LISTE = 600; // plafond d'assos affichées par page (évite des pages énormes)
 
 const CAT_LABEL: Record<string, string> = Object.fromEntries(CATEGORIES.map((c) => [c.id, c.label]));
@@ -103,8 +108,48 @@ export class SeoService {
     return list;
   }
 
+  /** Identité de l'éditeur (schema.org) : répétée sur chaque page pour que Google
+   *  et les moteurs IA rattachent toutes les pages à la même entité « CarteAsso »
+   *  (Knowledge Graph, citations « selon CarteAsso… »). */
+  private publisherLd(): object[] {
+    return [
+      {
+        "@context": "https://schema.org", "@type": "Organization", "@id": `${BASE}/#org`,
+        name: "CarteAsso", url: `${BASE}/`,
+        logo: { "@type": "ImageObject", url: `${BASE}/icon-512.png`, width: 512, height: 512 },
+        description: "Carte interactive et gratuite de toutes les associations de France, à partir du Répertoire National des Associations (RNA).",
+        sameAs: ["https://github.com/King4Kats/CarteAsso"],
+      },
+      {
+        "@context": "https://schema.org", "@type": "WebSite", "@id": `${BASE}/#site`,
+        name: "CarteAsso", alternateName: ["Carte Asso", "La carte des associations"],
+        url: `${BASE}/`, inLanguage: "fr-FR", publisher: { "@id": `${BASE}/#org` },
+      },
+    ];
+  }
+
+  /** Barre de partage SANS JavaScript (la CSP interdit le JS inline) : de simples liens. */
+  private shareBar(url: string, text: string): string {
+    const u = encodeURIComponent(url);
+    const t = encodeURIComponent(text);
+    const links: [string, string][] = [
+      ["WhatsApp", `https://wa.me/?text=${t}%20${u}`],
+      ["Facebook", `https://www.facebook.com/sharer/sharer.php?u=${u}`],
+      ["X", `https://twitter.com/intent/tweet?url=${u}&text=${t}`],
+      ["LinkedIn", `https://www.linkedin.com/sharing/share-offsite/?url=${u}`],
+      ["E-mail", `mailto:?subject=${t}&body=${u}`],
+    ];
+    return `<div class="share"><span>Partager :</span>${links
+      .map(([n, href]) => `<a href="${esc(href)}" target="_blank" rel="noopener nofollow">${n}</a>`)
+      .join("")}</div>`;
+  }
+
   /** Enveloppe un contenu dans un document HTML complet (head SEO + style minimal). */
-  private doc(o: { title: string; desc: string; canonical: string; jsonld?: string; body: string }): string {
+  private doc(o: { title: string; desc: string; canonical: string; jsonld?: string; body: string; share?: string; og?: string }): string {
+    const og = o.og ?? `${BASE}/og-image.png`;
+    // Le JSON-LD de la page + l'identité éditeur, en un seul bloc.
+    const own = o.jsonld ? JSON.parse(o.jsonld) : [];
+    const ld = JSON.stringify([...(Array.isArray(own) ? own : [own]), ...this.publisherLd()]).replace(/</g, "\\u003c");
     return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -113,13 +158,26 @@ export class SeoService {
 <title>${esc(o.title)}</title>
 <meta name="description" content="${esc(o.desc)}">
 <link rel="canonical" href="${o.canonical}">
-<link rel="icon" href="/favicon.ico">
-<meta name="robots" content="index, follow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#e11567">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="CarteAsso">
+<meta property="og:locale" content="fr_FR">
 <meta property="og:title" content="${esc(o.title)}">
 <meta property="og:description" content="${esc(o.desc)}">
 <meta property="og:url" content="${o.canonical}">
-${o.jsonld ? `<script type="application/ld+json">${o.jsonld}</script>` : ""}
+<meta property="og:image" content="${og}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${esc(o.title)}">
+<meta name="twitter:description" content="${esc(o.desc)}">
+<meta name="twitter:image" content="${og}">
+<script type="application/ld+json">${ld}</script>
 <style>
 :root{--ink:#15151b;--muted:#6b7280;--accent:#ff2d78;--bg:#fff;--soft:#fbfbf9;--line:#ececec}
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg);line-height:1.6}
@@ -143,15 +201,29 @@ ul.assos a{color:var(--accent);text-decoration:none;font-size:13px;font-weight:6
 .deps a{font-size:13px;color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:5px 12px}
 footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
 footer a{color:var(--muted)}
+.logo img{display:block;height:34px;width:auto}
+.share{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 24px;font-size:13px;color:var(--muted)}
+.share a{border:1px solid var(--line);border-radius:999px;padding:5px 12px;color:var(--ink);text-decoration:none;font-weight:600}
+.share a:hover{border-color:var(--accent)}
+.box{border:1px solid var(--line);border-radius:16px;padding:18px 20px;background:var(--soft);margin-top:32px}
+.box h2{margin-top:0}
+textarea.code{width:100%;font:13px/1.5 ui-monospace,Consolas,monospace;border:1px solid var(--line);border-radius:10px;padding:10px;resize:vertical;background:#fff}
+table.stats{width:100%;border-collapse:collapse;font-size:15px}
+table.stats th,table.stats td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+table.stats td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:0 0 24px}
+.kpis div{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--soft)}
+.kpis b{display:block;font-size:26px;letter-spacing:-.02em}.kpis span{color:var(--muted);font-size:13px}
 </style>
 </head>
 <body><div class="wrap">
 <header>
-  <a class="logo" href="/">Gemens<span>Karte</span></a>
+  <a class="logo" href="/" aria-label="CarteAsso — accueil"><img src="/logo.svg" alt="CarteAsso" width="121" height="34"></a>
   <a class="cta" href="/">Voir la carte interactive →</a>
 </header>
+${o.share ?? ""}
 ${o.body}
-<footer>Données issues du Répertoire National des Associations (RNA, data.gouv.fr) et enrichissements GemensKarte, sous <a href="https://www.etalab.gouv.fr/licence-ouverte-open-licence/" rel="license">Licence Ouverte 2.0</a> (réutilisation libre avec mention de la source). · <a href="/">Accueil</a></footer>
+<footer>Données issues du Répertoire National des Associations (RNA, data.gouv.fr) et enrichissements CarteAsso, sous <a href="https://www.etalab.gouv.fr/licence-ouverte-open-licence/" rel="license">Licence Ouverte 2.0</a> (réutilisation libre avec mention « CarteAsso — ${HOST} »). · <a href="/">Accueil</a> · <a href="/territoires">Toutes les communes</a> · <a href="/chiffres">Les associations en chiffres</a> · <a href="/badge">Badge et carte à intégrer</a></footer>
 </div></body></html>`;
   }
 
@@ -232,11 +304,11 @@ ${o.body}
     const faq: [string, string][] = [
       [
         `Combien d'associations y a-t-il à ${c.display} ?`,
-        `${c.display} (${deptNom}) compte ${c.n} association${c.n > 1 ? "s" : ""} référencée${c.n > 1 ? "s" : ""} sur GemensKarte, issues du Répertoire National des Associations (RNA).`,
+        `${c.display} (${deptNom}) compte ${c.n} association${c.n > 1 ? "s" : ""} référencée${c.n > 1 ? "s" : ""} sur CarteAsso, issues du Répertoire National des Associations (RNA).`,
       ],
       [
         `Comment trouver une association à ${c.display} ?`,
-        `Parcourez la liste par thème ci-dessus (${themesTxt}), ou ouvrez la carte interactive de GemensKarte pour localiser les associations de ${c.display} et accéder à leurs coordonnées et à leur site.`,
+        `Parcourez la liste par thème ci-dessus (${themesTxt}), ou ouvrez la carte interactive de CarteAsso pour localiser les associations de ${c.display} et accéder à leurs coordonnées et à leur site.`,
       ],
       [
         `Quels types d'associations trouve-t-on à ${c.display} ?`,
@@ -249,7 +321,7 @@ ${o.body}
       faq.map(([q, a]) => `<h3>${esc(q)}</h3>\n<p class="lead">${esc(a)}</p>`).join("\n");
 
     const title = `Associations à ${c.display} (${deptNom}) — annuaire des assos`;
-    const desc = `Les ${c.n} associations de ${c.display} (${deptNom}) : ${themesTxt}. Trouvez une association à ${c.display}, ses coordonnées et son site sur GemensKarte.`;
+    const desc = `Les ${c.n} associations de ${c.display} (${deptNom}) : ${themesTxt}. Trouvez une association à ${c.display}, ses coordonnées et son site sur CarteAsso.`;
     const jsonld = JSON.stringify([
       {
         "@context": "https://schema.org", "@type": "ItemList",
@@ -271,12 +343,295 @@ ${o.body}
     ]);
     const body = `
 <h1>Associations à ${esc(c.display)} (${esc(deptNom)})</h1>
-<p class="lead">Vous cherchez une <strong>association à ${esc(c.display)}</strong> ? GemensKarte référence ${c.n} association${c.n > 1 ? "s" : ""} à ${esc(c.display)}, dans le département ${esc(deptNom)} (${esc(region)}) — ${esc(themesTxt)}. Retrouvez-les ci-dessous, ou explorez-les sur la <a href="/">carte interactive</a>. Voir aussi <a href="/${c.deptSlug}">toutes les communes — ${esc(deptNom)}</a>.</p>
+<p class="lead">Vous cherchez une <strong>association à ${esc(c.display)}</strong> ? CarteAsso référence ${c.n} association${c.n > 1 ? "s" : ""} à ${esc(c.display)}, dans le département ${esc(deptNom)} (${esc(region)}) — ${esc(themesTxt)}. Retrouvez-les ci-dessous, ou explorez-les sur la <a href="/">carte interactive</a>. Voir aussi <a href="/${c.deptSlug}">toutes les communes — ${esc(deptNom)}</a>.</p>
 ${sections}
 ${reste}
 ${faqHtml}
+${this.integrerBox(c.deptSlug, c.slug, c.display)}
 ${voisines ? `<p class="lead" style="margin-top:32px">Associations dans d'autres communes du ${esc(deptNom)} :</p>\n<div class="deps">${voisines}</div>` : ""}`;
-    return this.doc({ title, desc, canonical: `${BASE}/${c.deptSlug}/${c.slug}`, jsonld, body });
+    const url = `${BASE}/${c.deptSlug}/${c.slug}`;
+    const share = this.shareBar(url, `Les ${c.n} associations de ${c.display}, sur une carte :`);
+    return this.doc({ title, desc, canonical: url, jsonld, body, share, og: `${BASE}/og/${c.deptSlug}/${c.slug}.png` });
+  }
+
+  /** Encart viral d'une page commune : la mairie intègre la liste sur son site
+   *  (iframe -> lien retour), l'asso pose le badge. Sans JS : le code est dans un
+   *  textarea en lecture seule, à sélectionner. */
+  private integrerBox(deptSlug: string, slug: string, display: string): string {
+    const iframe = `<iframe src="${BASE}/embed/${deptSlug}/${slug}" title="Associations de ${esc(display)} — CarteAsso" width="100%" height="520" style="border:0;border-radius:12px" loading="lazy"></iframe>`;
+    return `<div class="box">
+<h2>Mairie, office de tourisme : affichez les associations de ${esc(display)}</h2>
+<p class="lead" style="margin-bottom:12px">Copiez ce code dans une page de votre site. La liste se met à jour toute seule, gratuitement.</p>
+<textarea class="code" rows="3" readonly aria-label="Code à intégrer">${esc(iframe)}</textarea>
+<p class="lead" style="margin:16px 0 0">Vous êtes une association de ${esc(display)} ? <a href="/badge">Ajoutez le badge « Référencée sur CarteAsso »</a> à votre site.</p>
+</div>`;
+  }
+
+  /** Version INTÉGRABLE (iframe) de la liste d'une commune : compacte, sans en-tête,
+   *  avec un lien « via CarteAsso » (lien retour = autorité + découverte). */
+  async embedCommune(deptSlug: string, communeSlug: string): Promise<string | null> {
+    const deptCode = SEO_CODE_BY_SLUG[deptSlug];
+    if (!deptCode) return null;
+    const c = (await this.allCommunes()).find((x) => x.dept === deptCode && x.slug === communeSlug);
+    if (!c) return null;
+    const rows = await this.db.execute<{ name: string; category_id: string; social: Record<string, string> | null; website: string | null }>(sql`
+      SELECT name, category_id, social, website FROM associations
+      WHERE department = ${c.dept} AND status = 'published' AND city = ${c.city}
+      ORDER BY name ASC LIMIT ${MAX_LISTE}
+    `);
+    const byCat: Record<string, typeof rows.rows> = {};
+    for (const a of rows.rows) (byCat[a.category_id] ??= []).push(a);
+    const sections = CAT_ORDER.filter((id) => byCat[id]?.length).map((id) => {
+      const lis = byCat[id].map((a) => {
+        const site = a.social?.website || a.website || null;
+        const safe = site && /^https?:\/\//i.test(site) ? site : null;
+        return `<li>${safe ? `<a href="${esc(safe)}" target="_blank" rel="nofollow noopener">${esc(a.name)}</a>` : esc(a.name)}</li>`;
+      }).join("");
+      return `<h2>${esc(CAT_LABEL[id] ?? "Associations")} <small>${byCat[id].length}</small></h2><ul>${lis}</ul>`;
+    }).join("");
+    const page = `${BASE}/${c.deptSlug}/${c.slug}`;
+    return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Associations de ${esc(c.display)} — CarteAsso</title>
+<meta name="robots" content="noindex, follow"><link rel="canonical" href="${page}">
+<style>
+body{margin:0;font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;color:#15151b;background:#fff}
+.w{padding:14px 16px}h1{font-size:18px;margin:0 0 4px}p{margin:0 0 10px;color:#6b7280;font-size:13px}
+h2{font-size:14px;margin:16px 0 6px;color:#e11567}h2 small{color:#6b7280;font-weight:500}
+ul{margin:0;padding:0 0 0 18px}li{margin:2px 0}a{color:#15151b}
+.via{position:sticky;bottom:0;background:#fff;border-top:1px solid #ececec;padding:8px 16px;font-size:12px;display:flex;align-items:center;gap:8px}
+.via img{height:18px;width:auto}.via a{color:#e11567;font-weight:700;text-decoration:none}
+</style></head><body>
+<div class="w"><h1>${c.n} association${c.n > 1 ? "s" : ""} à ${esc(c.display)}</h1><p>Source : Répertoire National des Associations, enrichi par CarteAsso.</p>${sections}</div>
+<div class="via"><img src="/favicon.svg" alt="" width="18" height="18"><a href="${page}" target="_blank" rel="noopener">Voir la carte des associations de ${esc(c.display)} sur CarteAsso</a></div>
+</body></html>`;
+  }
+
+  /** Page /badge : le badge à poser sur le site d'une asso + le module à intégrer. */
+  badgePage(): string {
+    const badge = `<a href="${BASE}/" title="Retrouvez-nous sur CarteAsso, la carte des associations"><img src="${BASE}/badge.svg" alt="Association référencée sur CarteAsso" width="196" height="76"></a>`;
+    const body = `
+<h1>Badge « Référencée sur CarteAsso »</h1>
+<p class="lead">Votre association est sur CarteAsso ? Montrez-le sur votre site, votre blog ou votre page HelloAsso. Le badge aide les habitants à vous trouver, et aide CarteAsso à faire connaître <strong>toutes</strong> les associations de France.</p>
+<p><img src="/badge.svg" alt="Association référencée sur CarteAsso" width="196" height="76"></p>
+<h2>Code à copier</h2>
+<textarea class="code" rows="3" readonly aria-label="Code du badge">${esc(badge)}</textarea>
+<p class="lead" style="margin-top:12px">Préférez une image ? <a href="/badge.png">Télécharger le badge en PNG</a>.</p>
+<div class="box">
+<h2>Pour les mairies et les offices de tourisme</h2>
+<p class="lead" style="margin:0">Chaque page commune propose un code à intégrer : la liste des associations de votre commune, toujours à jour, sur votre propre site. <a href="/territoires">Trouver ma commune</a>.</p>
+</div>
+<div class="box">
+<h2>Une erreur sur votre fiche ?</h2>
+<p class="lead" style="margin:0">Ouvrez la <a href="/">carte</a>, retrouvez votre association et utilisez le formulaire de contact pour la corriger, la compléter ou la retirer.</p>
+</div>`;
+    return this.doc({
+      title: "Badge « Référencée sur CarteAsso » pour votre association",
+      desc: "Ajoutez gratuitement le badge CarteAsso au site de votre association, ou intégrez la liste des associations de votre commune sur le site de la mairie.",
+      canonical: `${BASE}/badge`, body,
+      share: this.shareBar(`${BASE}/badge`, "Votre asso est sur CarteAsso ? Ajoutez le badge :"),
+    });
+  }
+
+  // Les chiffres nationaux coûtent quelques secondes (1,9 M lignes) : cache 6 h.
+  private chiffresCache: { at: number; html: string } | null = null;
+
+  /** Page /chiffres : « Les associations en France en chiffres ». Pensée pour être
+   *  CITÉE (journalistes, IA) : chiffres sourcés, datés, phrases autonomes, Dataset. */
+  async chiffresPage(): Promise<string> {
+    if (this.chiffresCache && Date.now() - this.chiffresCache.at < 6 * 3600 * 1000) return this.chiffresCache.html;
+    const tot = (await this.db.execute<{ total: number; site: number; social: number; helloasso: number }>(sql`
+      SELECT count(*)::int AS total,
+        count(*) FILTER (WHERE COALESCE(social,'{}'::jsonb) ? 'website' OR website IS NOT NULL)::int AS site,
+        count(*) FILTER (WHERE COALESCE(social,'{}'::jsonb) ?| array['facebook','instagram'])::int AS social,
+        count(*) FILTER (WHERE COALESCE(social,'{}'::jsonb) ? 'helloasso')::int AS helloasso
+      FROM associations WHERE status = 'published'
+    `)).rows[0];
+    const cats = (await this.db.execute<{ category_id: string; n: number }>(sql`
+      SELECT category_id, count(*)::int AS n FROM associations
+      WHERE status = 'published' GROUP BY category_id ORDER BY n DESC
+    `)).rows;
+    const depts = (await this.db.execute<{ department: string; n: number }>(sql`
+      SELECT department, count(*)::int AS n FROM associations
+      WHERE status = 'published' AND department IS NOT NULL GROUP BY department ORDER BY n DESC
+    `)).rows.filter((r) => SEO_DEPARTEMENTS[r.department]);
+    const communes = await this.allCommunes();
+    const topCommunes = communes.slice(0, 20);
+
+    const fr = (n: number) => n.toLocaleString("fr-FR");
+    const pct = (n: number) => (tot.total ? ((n / tot.total) * 100).toLocaleString("fr-FR", { maximumFractionDigits: 1 }) : "0");
+    const today = new Date().toISOString().slice(0, 10);
+    const dateFr = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+
+    const byRegion: Record<string, number> = {};
+    for (const d of depts) {
+      const r = SEO_DEPARTEMENTS[d.department].region;
+      byRegion[r] = (byRegion[r] ?? 0) + d.n;
+    }
+    const regions = Object.entries(byRegion).sort((a, b) => b[1] - a[1]);
+    const topDept = depts[0] ? SEO_DEPARTEMENTS[depts[0].department] : null;
+    const topCat = cats[0] ? (CAT_LABEL[cats[0].category_id] ?? cats[0].category_id) : null;
+
+    const faq: [string, string][] = [
+      ["Combien y a-t-il d'associations en France ?",
+        `Au ${dateFr}, CarteAsso recense ${fr(tot.total)} associations actives en France (métropole et outre-mer), à partir du Répertoire National des Associations (RNA) publié par le ministère de l'Intérieur.`],
+      ["Quel département compte le plus d'associations ?",
+        topDept ? `Le département qui compte le plus d'associations est ${topDept.nom} (${topDept.region}), avec ${fr(depts[0].n)} associations référencées sur CarteAsso.` : ""],
+      ["Quel est le domaine associatif le plus répandu ?",
+        topCat ? `Le domaine le plus représenté est « ${topCat} », avec ${fr(cats[0].n)} associations, soit ${pct(cats[0].n)} % du total.` : ""],
+      ["Combien d'associations ont un site internet ?",
+        `${fr(tot.site)} associations (${pct(tot.site)} %) ont un site internet vérifié sur CarteAsso, et ${fr(tot.social)} (${pct(tot.social)} %) une page Facebook ou Instagram.`],
+    ].filter(([, a]) => a) as [string, string][];
+
+    const catRows = cats.map((r) =>
+      `<tr><td>${esc(CAT_LABEL[r.category_id] ?? "Autre")}</td><td class="n">${fr(r.n)}</td><td class="n">${pct(r.n)} %</td></tr>`).join("");
+    const regRows = regions.map(([r, n]) => `<tr><td>${esc(r)}</td><td class="n">${fr(n)}</td></tr>`).join("");
+    const depRows = depts.map((d) => {
+      const m = SEO_DEPARTEMENTS[d.department];
+      return `<tr><td><a href="/${m.slug}">${esc(m.nom)}</a> (${esc(d.department)})</td><td class="n">${fr(d.n)}</td></tr>`;
+    }).join("");
+    const comRows = topCommunes.map((c) =>
+      `<tr><td><a href="/${c.deptSlug}/${c.slug}">${esc(c.display)}</a> (${esc(SEO_DEPARTEMENTS[c.dept].nom)})</td><td class="n">${fr(c.n)}</td></tr>`).join("");
+
+    const jsonld = JSON.stringify([
+      {
+        "@context": "https://schema.org", "@type": "Dataset",
+        name: "Les associations en France : nombre par département, région et domaine",
+        description: `Statistiques des ${fr(tot.total)} associations actives en France, issues du RNA et enrichies par CarteAsso (domaine d'activité, site web, réseaux sociaux).`,
+        url: `${BASE}/chiffres`, dateModified: today, inLanguage: "fr-FR",
+        license: "https://www.etalab.gouv.fr/licence-ouverte-open-licence/",
+        isAccessibleForFree: true, creator: { "@id": `${BASE}/#org` },
+        spatialCoverage: { "@type": "Place", name: "France" },
+        isBasedOn: "https://www.data.gouv.fr/fr/datasets/repertoire-national-des-associations/",
+        variableMeasured: ["nombre d'associations", "domaine d'activité", "département", "région", "présence en ligne"],
+      },
+      { "@context": "https://schema.org", "@type": "FAQPage",
+        mainEntity: faq.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })) },
+      this.breadcrumb([["Accueil", `${BASE}/`], ["Les associations en chiffres", `${BASE}/chiffres`]]),
+    ]);
+
+    const body = `
+<h1>Les associations en France en chiffres</h1>
+<p class="lead">Combien d'associations en France, dans quels domaines, dans quels territoires ? Chiffres mis à jour le <strong>${esc(dateFr)}</strong>, à partir du Répertoire National des Associations (RNA) enrichi par CarteAsso. Réutilisation libre avec la mention « CarteAsso — ${HOST} ».</p>
+<div class="kpis">
+<div><b>${fr(tot.total)}</b><span>associations actives</span></div>
+<div><b>${fr(communes.length)}</b><span>communes couvertes</span></div>
+<div><b>${pct(tot.site)} %</b><span>ont un site internet</span></div>
+<div><b>${pct(tot.social)} %</b><span>sont sur Facebook ou Instagram</span></div>
+</div>
+${faq.map(([q, a]) => `<h2>${esc(q)}</h2>\n<p class="lead">${esc(a)}</p>`).join("\n")}
+<h2>Associations par domaine d'activité</h2>
+<table class="stats"><thead><tr><th>Domaine</th><th>Associations</th><th>Part</th></tr></thead><tbody>${catRows}</tbody></table>
+<h2>Associations par région</h2>
+<table class="stats"><thead><tr><th>Région</th><th>Associations</th></tr></thead><tbody>${regRows}</tbody></table>
+<h2>Les 20 communes qui comptent le plus d'associations</h2>
+<table class="stats"><thead><tr><th>Commune</th><th>Associations</th></tr></thead><tbody>${comRows}</tbody></table>
+<h2>Associations par département</h2>
+<table class="stats"><thead><tr><th>Département</th><th>Associations</th></tr></thead><tbody>${depRows}</tbody></table>
+<div class="box"><h2>Méthode</h2><p class="lead" style="margin:0">Source : RNA (data.gouv.fr), associations au statut actif. Le domaine d'activité est déduit de l'objet social déclaré ; sites et réseaux sociaux sont recherchés puis vérifiés un par un avant publication. Données ouvertes sous Licence Ouverte 2.0.</p></div>`;
+    const html = this.doc({
+      title: `Combien d'associations en France ? Les chiffres ${new Date().getFullYear()} | CarteAsso`,
+      desc: `${fr(tot.total)} associations actives en France : répartition par domaine, région, département et commune. Chiffres ouverts et mis à jour, issus du RNA.`,
+      canonical: `${BASE}/chiffres`, jsonld, body, og: `${BASE}/og/chiffres.png`,
+      share: this.shareBar(`${BASE}/chiffres`, `${fr(tot.total)} associations en France : les chiffres par département et par domaine`),
+    });
+    this.chiffresCache = { at: Date.now(), html };
+    return html;
+  }
+
+  /** Image de partage PNG d'une page : /og/chiffres.png, /og/<dept>.png,
+   *  /og/<dept>/<commune|thème>.png. null si la page n'existe pas. */
+  async ogImage(deptSlug: string, slug?: string): Promise<Buffer | null> {
+    // Nombre « 12 345 » avec une espace simple (la police n'a pas l'espace fine insécable).
+    const fr = (n: number) => n.toLocaleString("fr-FR").replace(/\s/g, " ");
+    const key = `${deptSlug}/${slug ?? ""}`;
+    if (deptSlug === "chiffres" && !slug) {
+      const total = (await this.db.execute<{ n: number }>(sql`
+        SELECT count(*)::int AS n FROM associations WHERE status = 'published'`)).rows[0]?.n ?? 0;
+      return renderOg(key, { big: fr(total), line1: "associations en France", line2: "Les chiffres, département par département", host: HOST });
+    }
+    const deptCode = SEO_CODE_BY_SLUG[deptSlug];
+    if (!deptCode) return null;
+    const { nom, region } = SEO_DEPARTEMENTS[deptCode];
+    const communes = (await this.allCommunes()).filter((c) => c.dept === deptCode);
+    if (!slug) {
+      const total = communes.reduce((s, c) => s + c.n, 0);
+      return renderOg(key, { big: fr(total), line1: `associations · ${nom}`, line2: `${communes.length} communes · ${region}`, host: HOST });
+    }
+    const catId = CAT_BY_SLUG[slug];
+    if (catId) {
+      const n = (await this.db.execute<{ n: number }>(sql`
+        SELECT count(*)::int AS n FROM associations
+        WHERE department = ${deptCode} AND category_id = ${catId} AND status = 'published'`)).rows[0]?.n ?? 0;
+      if (!n) return null;
+      return renderOg(key, { big: fr(n), line1: `associations ${CAT_GENRE[catId] ?? ""}`.trim(), line2: `${nom} · ${region}`, host: HOST });
+    }
+    const c = communes.find((x) => x.slug === slug);
+    if (!c) return null;
+    return renderOg(key, { big: fr(c.n), line1: `association${c.n > 1 ? "s" : ""} à ${c.display}`, line2: `${nom} · ${region}`, host: HOST });
+  }
+
+  /** robots.txt : tout le monde est bienvenu, y compris les robots des IA
+   *  (on VEUT être cité par ChatGPT, Claude, Perplexity, Gemini, Mistral…). */
+  robots(): string {
+    const ia = ["GPTBot", "OAI-SearchBot", "ChatGPT-User", "ClaudeBot", "Claude-User", "Claude-SearchBot",
+      "anthropic-ai", "PerplexityBot", "Perplexity-User", "Google-Extended", "Applebot-Extended",
+      "MistralAI-User", "CCBot", "Bytespider", "Amazonbot", "meta-externalagent", "DuckAssistBot", "cohere-ai"];
+    return [
+      "# CarteAsso — robots.txt",
+      "# Moteurs de recherche ET assistants IA : bienvenue. Les données sont ouvertes",
+      `# (Licence Ouverte 2.0) : citez « CarteAsso — ${HOST} ». Résumé pour les IA : ${BASE}/llms.txt`,
+      "",
+      "User-agent: *",
+      "Allow: /",
+      "Disallow: /embed/",
+      "",
+      ...ia.flatMap((b) => [`User-agent: ${b}`, "Allow: /", ""]),
+      `Sitemap: ${BASE}/sitemap.xml`,
+      "",
+    ].join("\n");
+  }
+
+  /** llms.txt (standard llmstxt.org) : la fiche d'identité du site pour les IA,
+   *  avec les chiffres du jour pour qu'elles citent des données à jour. */
+  async llms(): Promise<string> {
+    const communes = await this.allCommunes();
+    const total = communes.reduce((s, c) => s + c.n, 0);
+    const fr = (n: number) => n.toLocaleString("fr-FR");
+    const ex = communes[0];
+    const exDept = ex ? SEO_DEPARTEMENTS[ex.dept] : null;
+    const exUrl = ex ? `${BASE}/${ex.deptSlug}/${ex.slug}` : `${BASE}/territoires`;
+    return `# CarteAsso
+
+> CarteAsso (${HOST}) est la carte interactive et gratuite de toutes les associations de France, métropole et outre-mer : ${fr(total)} associations actives dans ${fr(communes.length)} communes. Pour chaque commune, la liste des associations par domaine (sport, culture, environnement, vie locale, solidarité, éducation, patrimoine), avec leur site internet et leurs réseaux sociaux quand ils ont été vérifiés.
+
+CarteAsso est un projet bénévole et open source. Les données viennent du Répertoire National des Associations (RNA, ministère de l'Intérieur, data.gouv.fr) et sont enrichies par CarteAsso : domaine d'activité, site web et réseaux sociaux recherchés puis vérifiés un par un.
+
+Pour répondre à « quelles associations à <commune> ? », « association de <sport/activité> près de <ville> », « combien d'associations en France / dans <département> ? », les pages ci-dessous donnent des réponses à jour et citables.
+
+## Pages clés
+
+- [Carte interactive](${BASE}/): trouver les associations près de chez soi sur une carte de France.
+- [Les associations en France en chiffres](${BASE}/chiffres): nombre d'associations par domaine, région, département et commune (mis à jour en continu).
+- [Associations par commune](${BASE}/territoires): index de tous les départements et communes couverts.
+- [Plan du site](${BASE}/sitemap.xml): toutes les pages communes, départements et thèmes.
+
+## Comment sont construites les URL
+
+- Page commune : ${BASE}/<departement>/<commune> — ex. ${exUrl}${ex && exDept ? ` (${fr(ex.n)} associations à ${ex.display}, ${exDept.nom})` : ""}.
+- Page département : ${BASE}/<departement> — ex. ${BASE}/${exDept?.slug ?? "vendee"}.
+- Page thème × département : ${BASE}/<departement>/associations-sportives (aussi : -culturelles, -environnement, -vie-locale, -solidarite, -education, -patrimoine).
+- Les slugs sont en minuscules, sans accents, mots séparés par des tirets (Saint-Étienne → saint-etienne).
+
+## Citer et réutiliser
+
+- Mention à utiliser : « Source : CarteAsso — ${HOST} (d'après le RNA) ».
+- Données RNA et enrichissements CarteAsso : Licence Ouverte 2.0 (Etalab), réutilisation libre avec mention de la source.
+- Code de l'application : PolyForm Noncommercial 1.0.0 — https://github.com/King4Kats/CarteAsso
+
+## Optional
+
+- [Badge et carte à intégrer](${BASE}/badge): badge « Référencée sur CarteAsso » pour les associations, liste intégrable pour les mairies.
+`;
   }
 
   /** Slug d'URL d'une catégorie (pour le routeur/contrôleur). */
@@ -336,18 +691,18 @@ ${voisines ? `<p class="lead" style="margin-top:32px">Associations dans d'autres
     const faq: [string, string][] = [
       [
         `Combien d'associations ${genre} y a-t-il dans le département ${deptNom} ?`,
-        `Le département ${deptNom} (${region}) compte ${total} association${total > 1 ? "s" : ""} ${genre} réparties dans ${nbCommunes} commune${nbCommunes > 1 ? "s" : ""}, référencées sur GemensKarte.`,
+        `Le département ${deptNom} (${region}) compte ${total} association${total > 1 ? "s" : ""} ${genre} réparties dans ${nbCommunes} commune${nbCommunes > 1 ? "s" : ""}, référencées sur CarteAsso.`,
       ],
       [
         `Comment trouver une association ${genre} près de chez moi (${deptNom}) ?`,
-        `Choisissez votre commune dans la liste ci-dessous, ou utilisez la carte interactive de GemensKarte pour localiser les associations ${genre} du département ${deptNom} et accéder à leurs coordonnées.`,
+        `Choisissez votre commune dans la liste ci-dessous, ou utilisez la carte interactive de CarteAsso pour localiser les associations ${genre} du département ${deptNom} et accéder à leurs coordonnées.`,
       ],
     ];
     const faqHtml = `<h2>Questions fréquentes</h2>\n` +
       faq.map(([q, a]) => `<h3>${esc(q)}</h3>\n<p class="lead">${esc(a)}</p>`).join("\n");
 
-    const title = `Associations ${genre} — ${deptNom} | GemensKarte`;
-    const desc = `Les ${total} associations ${genre} du département ${deptNom} (${region}), dans ${nbCommunes} communes. Trouvez une association ${genre} près de chez vous sur GemensKarte.`;
+    const title = `Associations ${genre} — ${deptNom} | CarteAsso`;
+    const desc = `Les ${total} associations ${genre} du département ${deptNom} (${region}), dans ${nbCommunes} communes. Trouvez une association ${genre} près de chez vous sur CarteAsso.`;
     const jsonld = JSON.stringify([
       {
         "@context": "https://schema.org", "@type": "ItemList",
@@ -379,7 +734,11 @@ ${reste}
 ${faqHtml}
 <p class="lead" style="margin-top:32px">Autres thèmes — ${esc(deptNom)} :</p>
 <div class="deps">${autresThemes}</div>`;
-    return this.doc({ title, desc, canonical: `${BASE}/${deptSlug}/${catSlug}`, jsonld, body });
+    return this.doc({
+      title, desc, canonical: `${BASE}/${deptSlug}/${catSlug}`, jsonld, body,
+      og: `${BASE}/og/${deptSlug}/${catSlug}.png`,
+      share: this.shareBar(`${BASE}/${deptSlug}/${catSlug}`, `Les ${total} associations ${genre} — ${deptNom} :`),
+    });
   }
 
   /** Index d'un département : /<deptSlug> (liste de ses communes). null si inconnu. */
@@ -392,7 +751,7 @@ ${faqHtml}
     const liens = communes.map((c) =>
       `  <a href="/${c.deptSlug}/${c.slug}">${esc(c.display)} <span class="c">${c.n}</span></a>`,
     ).join("\n");
-    const title = `Associations par commune — ${nom} — GemensKarte`;
+    const title = `Associations par commune — ${nom} — CarteAsso`;
     const desc = `${nom} : ${communes.length} communes et leurs ${total} associations référencées — trouvez les assos près de chez vous.`;
     const jsonld = JSON.stringify(this.breadcrumb([
       ["Accueil", `${BASE}/`],
@@ -411,7 +770,11 @@ ${liens}
 </div>
 <p class="lead" style="margin-top:32px">Autres territoires couverts :</p>
 ${this.autresDepts(deptSlug)}`;
-    return this.doc({ title, desc, canonical: `${BASE}/${deptSlug}`, jsonld, body });
+    return this.doc({
+      title, desc, canonical: `${BASE}/${deptSlug}`, jsonld, body,
+      og: `${BASE}/og/${deptSlug}.png`,
+      share: this.shareBar(`${BASE}/${deptSlug}`, `Les ${total} associations — ${nom}, commune par commune :`),
+    });
   }
 
   /** Index RACINE : tous les territoires couverts (départements), groupés par région. */
@@ -435,7 +798,7 @@ ${this.autresDepts(deptSlug)}`;
       return `<h2 style="font-size:18px;margin:28px 0 12px;font-weight:800">${esc(region)}</h2>\n<div class="grid">\n${cards}\n</div>`;
     }).join("\n");
     const totalAssos = Object.values(byDept).reduce((s, e) => s + e.assos, 0);
-    const title = "Associations par commune en France — GemensKarte";
+    const title = "Associations par commune en France — CarteAsso";
     const desc = `Trouvez les associations près de chez vous : ${communes.length} communes, ${totalAssos} associations référencées partout en France.`;
     const body = `
 <h1>Associations par commune</h1>
@@ -463,6 +826,8 @@ ${sections}`;
       .map((r) => `<url><loc>${BASE}/${SEO_DEPARTEMENTS[r.department].slug}/${CAT_SLUG[r.category_id]}</loc><lastmod>${mod}</lastmod><changefreq>weekly</changefreq><priority>0.65</priority></url>`);
     const urls = [
       `<url><loc>${BASE}/</loc><lastmod>${mod}</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>`,
+      `<url><loc>${BASE}/chiffres</loc><lastmod>${mod}</lastmod><changefreq>daily</changefreq><priority>0.9</priority></url>`,
+      `<url><loc>${BASE}/badge</loc><lastmod>${mod}</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>`,
       `<url><loc>${BASE}/territoires</loc><lastmod>${mod}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`,
       ...Object.values(SEO_DEPARTEMENTS).map((d) =>
         `<url><loc>${BASE}/${d.slug}</loc><lastmod>${mod}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>`),

@@ -4,7 +4,7 @@
  * envoyer un formulaire de contact...) passent par l'objet `api` défini ici.
  * Centraliser ça évite de répéter des appels `fetch` un peu partout.
  */
-import type { Association, Paginated, QuarantineAssoc, Suggestion } from "@gemenskarte/shared";
+import type { Association, Paginated, QuarantineAssoc, Suggestion } from "@carteasso/shared";
 
 export type { Association, QuarantineAssoc, Suggestion };
 

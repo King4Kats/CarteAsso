@@ -1,6 +1,6 @@
 """Stats de progression / contrôle du pipeline. Lecture seule."""
 import os, psycopg
-DSN = os.environ.get("DATABASE_URL", "postgres://gemenskarte:gemenskarte@localhost:5433/gemenskarte")
+DSN = os.environ.get("DATABASE_URL", "postgres://carteasso:carteasso@localhost:5433/carteasso")
 Q = {
     "total": "select count(*) from associations",
     "discovery": "select count(*) from associations where meta ? 'discovery'",

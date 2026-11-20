@@ -4,9 +4,9 @@
  * points sur la carte et les pastilles/filtres. Cette liste doit rester
  * identique à celle du backend (le serveur), d'où l'import partagé.
  */
-import type { Category } from "@gemenskarte/shared";
+import type { Category } from "@carteasso/shared";
 
-/** Catégories "confetti" — alignées sur le backend (@gemenskarte/shared). */
+/** Catégories "confetti" — alignées sur le backend (@carteasso/shared). */
 export const CATEGORIES: Category[] = [
   { id: "eco",    label: "Écologie",   emoji: "🌱", color: "#00d68f", colorSoft: "#E3FAF2", onLight: true },
   { id: "cult",   label: "Culture",    emoji: "🎭", color: "#ff2d78", colorSoft: "#FFE6EF", onLight: false },

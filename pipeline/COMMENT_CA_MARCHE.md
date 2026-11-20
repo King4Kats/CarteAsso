@@ -1,4 +1,4 @@
-# 🛠️ Pipeline GemensKarte — comment ça marche
+# 🛠️ Pipeline CarteAsso — comment ça marche
 
 > Documentation technique du pipeline d'enrichissement, niveau **dev junior → junior++** :
 > chaque notion est expliquée *et* documentée précisément (clés JSON, conditions SQL, scoring).
@@ -146,7 +146,7 @@ Pour chaque script : rôle · args clés · **lit** (gating) · **écrit** · en
 - **Args** : `--limit --offset --dept --redo --dry-run --sleep` (def. 1.5).
 - **Lit** : `location IS NOT NULL` ET (sauf `--redo`) `meta->'discovery' IS NULL` [+ `--dept`].
 - **Écrit** : `meta.discovery`, `meta.discoveryAt`. **Ne touche pas `social`.**
-- **Env** : `DATABASE_URL`, `GK_DDGS_BACKEND/PROXY/TIMEOUT/COOLDOWN` (§8).
+- **Env** : `DATABASE_URL`, `CA_DDGS_BACKEND/PROXY/TIMEOUT/COOLDOWN` (§8).
 
 ### `discover_targeted.py` — découverte ciblée par plateforme
 - **Rôle** : recherche **dédiée** là où la générale rate (`site:facebook.com "<nom>" <ville>`…).
@@ -294,10 +294,10 @@ Piloté par variables d'env (lues dans `discover.py` / `discover_targeted.py`) :
 
 | Variable | Rôle |
 |---|---|
-| `GK_DDGS_BACKEND` | **liste** de moteurs (`google,bing,yahoo`). Au moindre échec, le retry **bascule** au suivant. |
-| `GK_DDGS_PROXY` | proxy SOCKS optionnel (sortie par une autre IP). |
-| `GK_DDGS_TIMEOUT` | délai d'attente (plus long derrière un proxy). |
-| `GK_DDGS_COOLDOWN` | un moteur « rate-limited » est mis au repos (def. 180 s). |
+| `CA_DDGS_BACKEND` | **liste** de moteurs (`google,bing,yahoo`). Au moindre échec, le retry **bascule** au suivant. |
+| `CA_DDGS_PROXY` | proxy SOCKS optionnel (sortie par une autre IP). |
+| `CA_DDGS_TIMEOUT` | délai d'attente (plus long derrière un proxy). |
+| `CA_DDGS_COOLDOWN` | un moteur « rate-limited » est mis au repos (def. 180 s). |
 
 > ⚠️ Le scraping HTML des moteurs **fluctue** (selon l'IP et l'heure). D'où les **listes avec
 > repli** : un primaire distinct par passe + des moteurs fiables en filet. `search_with_retry`

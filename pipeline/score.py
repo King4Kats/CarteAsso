@@ -31,7 +31,7 @@ from datetime import datetime, timezone
 import psycopg
 
 DSN = os.environ.get(
-    "DATABASE_URL", "postgres://gemenskarte:gemenskarte@localhost:5433/gemenskarte"
+    "DATABASE_URL", "postgres://carteasso:carteasso@localhost:5433/carteasso"
 )
 
 # --- Barème (somme des maxima = 100) -----------------------------------------

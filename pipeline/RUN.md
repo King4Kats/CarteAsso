@@ -1,4 +1,4 @@
-# GemensKarte — Pipeline de vérification stricte des liens
+# CarteAsso — Pipeline de vérification stricte des liens
 
 Refonte complète : découverte DDG → vérif LLM locale (Ollama) → apply/route.
 Un seul script écrit dans `social` (apply). Tout le reste écrit des preuves dans `meta.*`.
@@ -10,19 +10,19 @@ Chaque passe est **idempotente** (gating timestamp) et **reprenable** (commit pa
    ```powershell
    & "$env:LOCALAPPDATA\Programs\Ollama\ollama.exe" list   # doit montrer qwen3.5:27b
    ```
-2. **Tunnels SSH vers la DB** (Postgres `gk-db` non exposé sur le serveur). Le supervisor
+2. **Tunnels SSH vers la DB** (Postgres `ca-db` non exposé sur le serveur). Le supervisor
    maintient DEUX tunnels pour répartir la charge (un seul forward sérialise tout le trafic) :
    ```bash
    ssh -N -o ServerAliveInterval=30 -L 0.0.0.0:5433:DB_CONTAINER_IP:5432 your-server  # jobs légers
    ssh -N -o ServerAliveInterval=30 -L 0.0.0.0:5434:DB_CONTAINER_IP:5432 your-server  # jobs DB-lourds
    ```
    5433 = discover/verify/helloasso/fb ; 5434 = liveness/events + bloc périodique apply/reap/
-   purge/score. (DB_CONTAINER_IP = IP du conteneur `gk-db` ; re-vérifier avec
-   `ssh your-server "docker exec gk-db hostname -i"`. Les scripts/diag ad-hoc utilisent 5433.)
+   purge/score. (DB_CONTAINER_IP = IP du conteneur `ca-db` ; re-vérifier avec
+   `ssh your-server "docker exec ca-db hostname -i"`. Les scripts/diag ad-hoc utilisent 5433.)
 3. **venv** : `.venv` ici, deps `psycopg[binary] ddgs httpx readability-lxml ollama`.
 
 Variables d'env (défauts entre parenthèses) :
-`DATABASE_URL` (postgres://gemenskarte:gemenskarte@localhost:5433/gemenskarte),
+`DATABASE_URL` (postgres://carteasso:carteasso@localhost:5433/carteasso),
 `OLLAMA_HOST` (http://localhost:11434), `VERIFY_MODEL` (qwen3.5:27b).
 
 ## Ordre d'exécution

@@ -4,7 +4,7 @@
  * des associations, et fournir l'autocomplétion utilisée par la barre de recherche.
  */
 import { Injectable, Logger, type OnModuleInit } from "@nestjs/common";
-import { CATEGORIES, type Association, type Suggestion } from "@gemenskarte/shared";
+import { CATEGORIES, type Association, type Suggestion } from "@carteasso/shared";
 import { MeiliSearch, type Index } from "meilisearch";
 import { getEnv } from "../config/env";
 

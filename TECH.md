@@ -1,6 +1,6 @@
-# GemensKarte — Architecture technique
+# CarteAsso — Architecture technique
 
-Backend et intégrations de **GemensKarte**, la carte des associations de
+Backend et intégrations de **CarteAsso**, la carte des associations de
 l'Ouest (Bretagne, Pays de la Loire, Normandie).
 
 > La **direction artistique / le front** sont traités à part. Ce document
@@ -16,7 +16,7 @@ l'Ouest (Bretagne, Pays de la Loire, Normandie).
 | Base de données | **PostgreSQL 16 + PostGIS** (géométries, index spatial GiST) |
 | Accès données | **Drizzle ORM** + SQL brut pour les requêtes PostGIS |
 | Recherche | **Meilisearch** (autocomplétion tolérante aux fautes) |
-| Validation / types | **Zod**, schémas partagés via `@gemenskarte/shared` |
+| Validation / types | **Zod**, schémas partagés via `@carteasso/shared` |
 | Géocodage | **Base Adresse Nationale** (open data) |
 | Données assos | Import **RNA** (Répertoire National des Associations) |
 | Dev | **Docker Compose** (Postgres+PostGIS, Meilisearch) |
@@ -66,7 +66,7 @@ pnpm install
 pnpm infra:up
 
 # 2. Types partagés
-pnpm --filter @gemenskarte/shared build
+pnpm --filter @carteasso/shared build
 
 # 3. Base de données
 pnpm db:migrate      # crée le schéma + les catégories

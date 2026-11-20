@@ -1,26 +1,26 @@
-# Déploiement complet GemensKarte sur your-server (tout en conteneurs).
+# Déploiement complet CarteAsso sur your-server (tout en conteneurs).
 # Web exposé sur le LAN en :8088. DB/Meili en réseau interne (pas de port hôte :
 # 5432 est déjà pris par Supabase sur la machine).
 services:
   db:
     image: postgis/postgis:16-3.6
-    container_name: gk-db
+    container_name: ca-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: gemenskarte
+      POSTGRES_USER: carteasso
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: gemenskarte
+      POSTGRES_DB: carteasso
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U gemenskarte -d gemenskarte"]
+      test: ["CMD-SHELL", "pg_isready -U carteasso -d carteasso"]
       interval: 5s
       timeout: 5s
       retries: 20
 
   meilisearch:
     image: getmeili/meilisearch:v1.11
-    container_name: gk-search
+    container_name: ca-search
     restart: unless-stopped
     environment:
       MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
@@ -32,7 +32,7 @@ services:
     build:
       context: .
       dockerfile: deploy/Dockerfile.api
-    container_name: gk-api
+    container_name: ca-api
     restart: unless-stopped
     environment:
       NODE_ENV: production
@@ -44,6 +44,9 @@ services:
       BAN_GEOCODER_URL: https://api-adresse.data.gouv.fr
       # Jeton admin lu depuis le fichier .env (gitignoré). Vide -> routes admin fermées.
       ADMIN_TOKEN: ${ADMIN_TOKEN:-}
+      # Domaine public (canonical, sitemap, partages). À passer à https://carteasso.fr
+      # dans .env le jour de la bascule (+ rebuild web, qui l'injecte dans index.html).
+      SITE_URL: ${SITE_URL:-https://gemenskarte.fr}
       # Formulaire de contact -> email. Définis SMTP_USER/SMTP_PASS dans .env (gitignoré).
       # Tant qu'ils sont vides, l'API n'envoie pas d'email (mode "console only").
       SMTP_USER: ${SMTP_USER:-}
@@ -64,7 +67,9 @@ services:
     build:
       context: .
       dockerfile: deploy/Dockerfile.web
-    container_name: gk-web
+      args:
+        SITE_URL: ${SITE_URL:-https://gemenskarte.fr}
+    container_name: ca-web
     restart: unless-stopped
     ports:
       - "8088:80"
@@ -77,7 +82,7 @@ services:
     build:
       context: .
       dockerfile: deploy/Dockerfile.enrich
-    container_name: gk-enrich
+    container_name: ca-enrich
     restart: on-failure
     environment:
       DATABASE_URL: ${DATABASE_URL}
@@ -89,7 +94,7 @@ services:
     build:
       context: .
       dockerfile: deploy/Dockerfile.enrich
-    container_name: gk-scrape
+    container_name: ca-scrape
     restart: no
     profiles: [scrape]
     environment:
@@ -105,7 +110,7 @@ services:
     build:
       context: .
       dockerfile: deploy/Dockerfile.enrich
-    container_name: gk-press
+    container_name: ca-press
     restart: "no"
     profiles: [press]
     environment:

@@ -1,4 +1,4 @@
-// Territoires GemensKarte + leur ÉTAT de scrap (code couleur de la carte de France).
+// Territoires CarteAsso + leur ÉTAT de scrap (code couleur de la carte de France).
 // Depuis l'import du RNA national : TOUTE la France est servie (bleu = RNA seul),
 // la Vendée est « en cours » (rose). Les tracés métropole+Corse vivent dans
 // `fr-departements-paths.ts` ; les DROM s'affichent en insets (fr-drom-paths.ts).

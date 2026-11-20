@@ -14,7 +14,7 @@ import {
   type PatchCategoryInput,
   type QuarantineAssoc,
   type ResolveQuarantineInput,
-} from "@gemenskarte/shared";
+} from "@carteasso/shared";
 import { sql, type SQL } from "drizzle-orm";
 import type { Pool } from "pg";
 import { DB, PG_POOL, type Db } from "../db/db.module";

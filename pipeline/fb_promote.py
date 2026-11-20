@@ -18,7 +18,7 @@ import psycopg
 from ollama import Client
 from verify_llm import judge_website, OLLAMA_HOST, DEFAULT_MODEL
 
-DSN = os.environ.get("DATABASE_URL", "postgres://gemenskarte:gemenskarte@localhost:5433/gemenskarte")
+DSN = os.environ.get("DATABASE_URL", "postgres://carteasso:carteasso@localhost:5433/carteasso")
 
 def main():
     ap = argparse.ArgumentParser()

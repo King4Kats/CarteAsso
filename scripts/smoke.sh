@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Smoke-test de l'API GemensKarte : vérifie tous les endpoints de bout en bout.
+# Smoke-test de l'API CarteAsso : vérifie tous les endpoints de bout en bout.
 # Usage : BASE=http://localhost:3000/api scripts/smoke.sh
 set -uo pipefail
 

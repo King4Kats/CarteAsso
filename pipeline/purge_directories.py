@@ -28,7 +28,7 @@ from lib_match import host_of
 BAD_HOSTS = {"mappy.com", "mappy.fr", "cerfapp.fr", "cerfapp.com"}
 
 DSN = os.environ.get(
-    "DATABASE_URL", "postgres://gemenskarte:gemenskarte@localhost:5433/gemenskarte"
+    "DATABASE_URL", "postgres://carteasso:carteasso@localhost:5433/carteasso"
 )
 
 

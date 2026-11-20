@@ -1,4 +1,4 @@
--- Ajoute la 7e catégorie "Patrimoine" (présente dans @gemenskarte/shared et utilisée par
+-- Ajoute la 7e catégorie "Patrimoine" (présente dans @carteasso/shared et utilisée par
 -- le classifieur, mais absente du seed initial 0002 -> violation de FK à l'import + /categories
 -- renvoyait 7 alors que la table n'en avait que 6). Idempotent.
 INSERT INTO categories (id, label, emoji, color, color_soft) VALUES

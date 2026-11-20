@@ -9,7 +9,7 @@ import os, json, re, argparse, sys
 import psycopg
 from events import AGENDA_BLOCK, NOISE_RE, AGENDA_SLUG_RE
 
-DSN = os.environ.get("DATABASE_URL", "postgres://gemenskarte:gemenskarte@localhost:5434/gemenskarte")
+DSN = os.environ.get("DATABASE_URL", "postgres://carteasso:carteasso@localhost:5434/carteasso")
 
 
 def keep(ev: dict) -> bool:

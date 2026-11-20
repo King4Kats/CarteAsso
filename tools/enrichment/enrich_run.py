@@ -26,7 +26,7 @@ from enrich_lite import classify, search
 import os
 
 DSN = os.environ.get(
-    "DATABASE_URL", "postgres://gemenskarte:gemenskarte@localhost:5432/gemenskarte"
+    "DATABASE_URL", "postgres://carteasso:carteasso@localhost:5432/carteasso"
 )
 
 # Plateformes appliquées automatiquement à la colonne `social`.

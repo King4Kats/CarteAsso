@@ -2,7 +2,7 @@
 // en lisant son nom et la description de son objet. Le fichier officiel des associations
 // (le RNA) ne donne pas de catégorie directement exploitable : on la déduit donc en
 // cherchant des mots-clés. Cette catégorie sert ensuite à colorer/filtrer les points sur la carte.
-import type { CategoryId } from "@gemenskarte/shared";
+import type { CategoryId } from "@carteasso/shared";
 
 /**
  * Classe une association dans une catégorie "confetti" à partir de son

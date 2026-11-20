@@ -1,4 +1,4 @@
-// GemensKarte — Composants "Peps & Confetti" en React + Tailwind
+// CarteAsso — Composants "Peps & Confetti" en React + Tailwind
 // -----------------------------------------------------------------------------
 // Pré-requis Tailwind : étendre le thème avec la palette des catégories.
 //

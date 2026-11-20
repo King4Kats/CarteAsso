@@ -1,4 +1,4 @@
--- GemensKarte — schéma initial (PostGIS + recherche trigram)
+-- CarteAsso — schéma initial (PostGIS + recherche trigram)
 
 CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
@@ -45,7 +45,7 @@ CREATE INDEX IF NOT EXISTS assoc_category_idx ON associations (category_id);
 CREATE INDEX IF NOT EXISTS assoc_department_idx ON associations (department);
 CREATE INDEX IF NOT EXISTS assoc_status_idx  ON associations (status);
 
--- Seed des catégories (source de vérité côté @gemenskarte/shared)
+-- Seed des catégories (source de vérité côté @carteasso/shared)
 INSERT INTO categories (id, label, emoji, color, color_soft) VALUES
   ('eco',    'Écologie',   '🌱', '#00d68f', '#E3FAF2'),
   ('cult',   'Culture',    '🎭', '#ff2d78', '#FFE6EF'),

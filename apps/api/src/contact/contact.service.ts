@@ -53,7 +53,7 @@ export class ContactService {
     }
     const sender = process.env.SMTP_FROM ?? process.env.SMTP_USER;
     await this.transporter.sendMail({
-      from: `"GemensKarte" <${sender}>`,
+      from: `"CarteAsso" <${sender}>`,
       to: DEST,
       subject,
       html,
@@ -61,7 +61,7 @@ export class ContactService {
     this.logger.log(`Email envoyé → ${DEST} : ${subject}`);
   }
 
-  // Template HTML partagé pour avoir un beau rendu "GemensKarte"
+  // Template HTML partagé pour avoir un beau rendu "CarteAsso"
   private wrapHtml(title: string, content: string): string {
     return `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 20px; border-radius: 12px;">
@@ -73,7 +73,7 @@ export class ContactService {
             ${content}
           </table>
           <p style="margin-top: 30px; font-size: 13px; color: #6B7280; text-align: center;">
-            Notification envoyée automatiquement par <b>GemensKarte</b>.
+            Notification envoyée automatiquement par <b>CarteAsso</b>.
           </p>
         </div>
       </div>
@@ -95,7 +95,7 @@ export class ContactService {
       <tr><td style="padding: 10px 0;"><b>Description</b></td><td style="padding: 10px 0;">${esc(data.description)}</td></tr>
     `;
     const html = this.wrapHtml("Nouvelle demande de référencement", tableContent);
-    await this.send(`[GemensKarte] Référencement — ${data.name}`, html);
+    await this.send(`[CarteAsso] Référencement — ${data.name}`, html);
   }
 
   // Même principe que recenser(), mais pour une demande de retrait
@@ -110,6 +110,6 @@ export class ContactService {
       ${data.email ? `<tr><td style="padding: 10px 0;"><b>Email contact</b></td><td style="padding: 10px 0;"><a href="mailto:${esc(data.email)}" style="color: #3B82F6;">${esc(data.email)}</a></td></tr>` : ""}
     `;
     const html = this.wrapHtml("Demande de déférencement", tableContent);
-    await this.send(`[GemensKarte] Déférencement — ${data.name}`, html);
+    await this.send(`[CarteAsso] Déférencement — ${data.name}`, html);
   }
 }

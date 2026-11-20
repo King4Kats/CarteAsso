@@ -10,7 +10,7 @@
  * Idempotent et repris en avant via un curseur sur `id` (jamais de boucle infinie :
  * une ligne non géocodable reste NULL mais on ne la repropose pas).
  *
- * Lancement : pnpm --filter @gemenskarte/api regeocode:missing
+ * Lancement : pnpm --filter @carteasso/api regeocode:missing
  */
 import { parse as parseSync } from "csv-parse/sync";
 import { Pool } from "pg";

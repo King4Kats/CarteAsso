@@ -2,10 +2,13 @@
 FROM node:20-bookworm-slim AS build
 RUN corepack enable
 WORKDIR /app
+# Domaine public injecté dans index.html (voir apps/web/vite.config.ts).
+ARG SITE_URL=https://gemenskarte.fr
+ENV SITE_URL=$SITE_URL
 COPY . .
 RUN pnpm install --no-frozen-lockfile \
- && pnpm --filter @gemenskarte/shared build \
- && pnpm --filter @gemenskarte/web build
+ && pnpm --filter @carteasso/shared build \
+ && pnpm --filter @carteasso/web build
 
 FROM nginx:1.27-alpine
 COPY --from=build /app/apps/web/dist /usr/share/nginx/html

@@ -14,7 +14,7 @@ let loaded = false;
 /** Charge le .env racine du monorepo puis un .env local éventuel. */
 export function loadEnv(): void {
   if (loaded) return;
-  // Quand l'API est lancée via `pnpm --filter @gemenskarte/api`, cwd = apps/api
+  // Quand l'API est lancée via `pnpm --filter @carteasso/api`, cwd = apps/api
   dotenv.config({ path: path.resolve(process.cwd(), "../../.env") });
   dotenv.config(); // apps/api/.env (override local), facultatif
   loaded = true;
@@ -33,6 +33,10 @@ const EnvSchema = z.object({
   // Jeton secret pour accéder aux routes d'administration. Vide par défaut =
   // administration fermée (les routes admin renvoient 401 tant qu'on ne l'a pas réglé).
   ADMIN_TOKEN: z.string().default(""),
+  // Adresse publique du site (canonical, sitemap, partages, llms.txt…). UN SEUL
+  // réglage pour changer de domaine : gemenskarte.fr tant que carteasso.fr n'est
+  // pas branché, puis SITE_URL=https://carteasso.fr dans le .env.
+  SITE_URL: z.string().url().default("https://gemenskarte.fr"),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

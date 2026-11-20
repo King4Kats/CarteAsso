@@ -1,4 +1,4 @@
-# GemensKarte — superviseur autonome du pipeline.
+# CarteAsso — superviseur autonome du pipeline.
 # Lancé par une tâche planifiée (au logon). Possède : 2 tunnels SSH + jobs scrap + apply/reap/score
 # périodiques. Auto-répare tunnels et jobs morts. Tout est idempotent/reprenable.
 #
@@ -8,15 +8,15 @@
 # Aucune exposition réseau (juste 2 connexions SSH locales).
 
 $ErrorActionPreference = 'Continue'
-$dir = 'C:\Users\user\Documents\gemenskarte-enrich'
+$dir = 'C:\Users\user\Documents\carteasso-enrich'
 Set-Location $dir
 $py  = "$dir\.venv\Scripts\python.exe"
 # Mot de passe de la base lu depuis un fichier local NON versionné (.dbpass), jamais
 # écrit en clair dans le code ni dans le dépôt. Repli sur l'ancien défaut si absent.
 $dbPassFile = "$dir\.dbpass"
-$dbPass = if (Test-Path $dbPassFile) { (Get-Content $dbPassFile -Raw).Trim() } else { 'gemenskarte' }
-$DSN_A = "postgres://gemenskarte:$dbPass@localhost:5433/gemenskarte"  # léger
-$DSN_B = "postgres://gemenskarte:$dbPass@localhost:5434/gemenskarte"  # lourd + périodique
+$dbPass = if (Test-Path $dbPassFile) { (Get-Content $dbPassFile -Raw).Trim() } else { 'carteasso' }
+$DSN_A = "postgres://carteasso:$dbPass@localhost:5433/carteasso"  # léger
+$DSN_B = "postgres://carteasso:$dbPass@localhost:5434/carteasso"  # lourd + périodique
 $env:DATABASE_URL = $DSN_B
 $log = "$dir\_supervisor.log"
 function Log($m) { "$(Get-Date -Format o)  $m" | Out-File -Append -Encoding utf8 $log }
@@ -43,11 +43,11 @@ function Start-Tunnel($port) {
   if ($old -and -not $old.HasExited) { Stop-Process -Id $old.Id -Force -ErrorAction SilentlyContinue }
   wsl -e bash -lc "pkill -f 'ssh -N.*0.0.0.0:${port}:' 2>/dev/null" 2>$null
 
-  # Résout l'IP du conteneur gk-db (peut changer après reboot des conteneurs).
+  # Résout l'IP du conteneur ca-db (peut changer après reboot des conteneurs).
   # NB: `hostname -i` (pas de template Go {{...}}) survit au quoting wsl->ssh->bash.
   $ip = ''
   try {
-    $raw = (wsl -e bash -lc "ssh -o ConnectTimeout=10 your-server 'docker exec gk-db hostname -i'").Trim()
+    $raw = (wsl -e bash -lc "ssh -o ConnectTimeout=10 your-server 'docker exec ca-db hostname -i'").Trim()
     $ip = ($raw -split '\s+')[0]
   } catch {}
   if ($ip -notmatch '^\d{1,3}(\.\d{1,3}){3}$') { $ip = 'DB_CONTAINER_IP' }
@@ -133,49 +133,49 @@ while ($true) {
   # Jobs légers (DDG/LLM) sur tunnel A = 5433.
   if ($null -eq $disc -or $disc.State -ne 'Running') {
     if ($disc) { Remove-Job $disc -Force -ErrorAction SilentlyContinue }
-    $disc = Start-Job -Name gk-disc -ScriptBlock $discBlock -ArgumentList $py, $dir, $DSN_A
+    $disc = Start-Job -Name ca-disc -ScriptBlock $discBlock -ArgumentList $py, $dir, $DSN_A
     Log "job découverte (re)lancé"
   }
   if ($null -eq $ver -or $ver.State -ne 'Running') {
     if ($ver) { Remove-Job $ver -Force -ErrorAction SilentlyContinue }
-    $ver = Start-Job -Name gk-ver -ScriptBlock $verBlock -ArgumentList $py, $dir, $DSN_A
+    $ver = Start-Job -Name ca-ver -ScriptBlock $verBlock -ArgumentList $py, $dir, $DSN_A
     Log "job vérif (re)lancé"
   }
   if ($null -eq $ha -or $ha.State -ne 'Running') {
     if ($ha) { Remove-Job $ha -Force -ErrorAction SilentlyContinue }
-    $ha = Start-Job -Name gk-ha -ScriptBlock $haBlock -ArgumentList $py, $dir, $DSN_A
+    $ha = Start-Job -Name ca-ha -ScriptBlock $haBlock -ArgumentList $py, $dir, $DSN_A
     Log "job HelloAsso (re)lancé"
   }
   if ($null -eq $fb -or $fb.State -ne 'Running') {
     if ($fb) { Remove-Job $fb -Force -ErrorAction SilentlyContinue }
-    $fb = Start-Job -Name gk-fb -ScriptBlock $fbBlock -ArgumentList $py, $dir, $DSN_A
+    $fb = Start-Job -Name ca-fb -ScriptBlock $fbBlock -ArgumentList $py, $dir, $DSN_A
     Log "job fb->site (re)lancé"
   }
   # Passes de découverte ciblées (facebook / instagram / website) sur tunnel A = 5433.
   if ($null -eq $tgtFb -or $tgtFb.State -ne 'Running') {
     if ($tgtFb) { Remove-Job $tgtFb -Force -ErrorAction SilentlyContinue }
-    $tgtFb = Start-Job -Name gk-tgtfb -ScriptBlock $tgtFbBlock -ArgumentList $py, $dir, $DSN_A
+    $tgtFb = Start-Job -Name ca-tgtfb -ScriptBlock $tgtFbBlock -ArgumentList $py, $dir, $DSN_A
     Log "job découverte ciblée facebook (re)lancé"
   }
   if ($null -eq $tgtIg -or $tgtIg.State -ne 'Running') {
     if ($tgtIg) { Remove-Job $tgtIg -Force -ErrorAction SilentlyContinue }
-    $tgtIg = Start-Job -Name gk-tgtig -ScriptBlock $tgtIgBlock -ArgumentList $py, $dir, $DSN_A
+    $tgtIg = Start-Job -Name ca-tgtig -ScriptBlock $tgtIgBlock -ArgumentList $py, $dir, $DSN_A
     Log "job découverte ciblée instagram (re)lancé"
   }
   if ($null -eq $tgtWeb -or $tgtWeb.State -ne 'Running') {
     if ($tgtWeb) { Remove-Job $tgtWeb -Force -ErrorAction SilentlyContinue }
-    $tgtWeb = Start-Job -Name gk-tgtweb -ScriptBlock $tgtWebBlock -ArgumentList $py, $dir, $DSN_A
+    $tgtWeb = Start-Job -Name ca-tgtweb -ScriptBlock $tgtWebBlock -ArgumentList $py, $dir, $DSN_A
     Log "job découverte ciblée website (re)lancé"
   }
   # Jobs DB-lourds sur tunnel B = 5434.
   if ($null -eq $liv -or $liv.State -ne 'Running') {
     if ($liv) { Remove-Job $liv -Force -ErrorAction SilentlyContinue }
-    $liv = Start-Job -Name gk-liv -ScriptBlock $livBlock -ArgumentList $py, $dir, $DSN_B
+    $liv = Start-Job -Name ca-liv -ScriptBlock $livBlock -ArgumentList $py, $dir, $DSN_B
     Log "job liveness (re)lancé"
   }
   if ($null -eq $ev -or $ev.State -ne 'Running') {
     if ($ev) { Remove-Job $ev -Force -ErrorAction SilentlyContinue }
-    $ev = Start-Job -Name gk-ev -ScriptBlock $evBlock -ArgumentList $py, $dir, $DSN_B
+    $ev = Start-Job -Name ca-ev -ScriptBlock $evBlock -ArgumentList $py, $dir, $DSN_B
     Log "job events (re)lancé"
   }
 

@@ -8,7 +8,7 @@
 # Usage : bash scripts/get-rna.sh        (avant `pnpm import:rna`)
 set -euo pipefail
 
-REPO="${RNA_REPO:-King4Kats/GemensKarte}"
+REPO="${RNA_REPO:-King4Kats/CarteAsso}"
 TAG="${RNA_TAG:-rna-latest}"
 OUT="data/rna/rna_france.csv.gz"
 URL="https://github.com/$REPO/releases/download/$TAG/rna_france.csv.gz"

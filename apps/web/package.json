@@ -1,5 +1,5 @@
 {
-  "name": "@gemenskarte/web",
+  "name": "@carteasso/web",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@gemenskarte/shared": "workspace:*",
+    "@carteasso/shared": "workspace:*",
     "leaflet": "^1.9.4",
     "leaflet.markercluster": "^1.5.3",
     "react": "^18.3.1",

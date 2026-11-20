@@ -38,7 +38,7 @@ Usage:
   python discover_targeted.py --platform facebook|instagram|helloasso|website
                               [--limit N] [--dept 85] [--redo] [--dry-run] [--sleep 1.5]
 
-Env: DATABASE_URL (défaut: tunnel local postgres://gemenskarte:gemenskarte@localhost:5433/gemenskarte)
+Env: DATABASE_URL (défaut: tunnel local postgres://carteasso:carteasso@localhost:5433/carteasso)
 """
 
 from __future__ import annotations
@@ -59,7 +59,7 @@ from lib_match import classify, normalize_social
 from helloasso import find_helloasso
 
 DSN = os.environ.get(
-    "DATABASE_URL", "postgres://gemenskarte:gemenskarte@localhost:5433/gemenskarte"
+    "DATABASE_URL", "postgres://carteasso:carteasso@localhost:5433/carteasso"
 )
 
 # Config par plateforme :

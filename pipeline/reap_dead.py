@@ -55,7 +55,7 @@ def reapable(rec: dict, min_fails: int, min_age_hours: int, now: datetime) -> bo
     return age_h >= min_age_hours
 
 DSN = os.environ.get(
-    "DATABASE_URL", "postgres://gemenskarte:gemenskarte@localhost:5433/gemenskarte"
+    "DATABASE_URL", "postgres://carteasso:carteasso@localhost:5433/carteasso"
 )
 
 

@@ -13,7 +13,7 @@ import {
   type Paginated,
   type QuarantineAssoc,
   ResolveQuarantineInput,
-} from "@gemenskarte/shared";
+} from "@carteasso/shared";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
 import { AdminGuard } from "../common/admin.guard";
 import { RateLimitGuard } from "../common/rate-limit.guard";
