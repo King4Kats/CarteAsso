@@ -700,6 +700,13 @@ export function Landing({ onSelect, onExplore, onPortal, dept }: {
         <a href="/badge" style={{ fontSize: 13, color: "var(--muted)", textDecoration: "none", fontWeight: 600, fontFamily: "var(--font)" }}>
           Badge pour votre asso
         </a>
+        {/* Pages juridiques obligatoires, rendues par l'API (comme /chiffres). */}
+        <a href="/mentions-legales" style={{ fontSize: 13, color: "var(--muted)", textDecoration: "none", fontWeight: 600, fontFamily: "var(--font)" }}>
+          Mentions légales
+        </a>
+        <a href="/confidentialite" style={{ fontSize: 13, color: "var(--muted)", textDecoration: "none", fontWeight: 600, fontFamily: "var(--font)" }}>
+          Confidentialité
+        </a>
         {/* Licences des données (distinctes de la licence du code, PolyForm Noncommercial) :
             RNA + enrichissements CarteAsso = Licence Ouverte 2.0 ; fond de carte = ODbL. */}
         <p style={{ fontSize: 13, color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>

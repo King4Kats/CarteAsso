@@ -4,7 +4,7 @@
  *   GET /sitemap.xml          -> plan du site (toutes les communes, tous départements)
  *   GET /<departement>        -> index des communes du département (ex. /vendee, /lot)
  *   GET /<departement>/<commune> -> page d'une commune (liste des assos en HTML)
- *   GET /chiffres, /badge, /robots.txt, /llms.txt, /embed/<d>/<c>, /og/…png (voir plus bas)
+ *   GET /chiffres, /badge, /mentions-legales, /confidentialite, /robots.txt, /llms.txt, /embed/<d>/<c>, /og/…png (voir plus bas)
  *
  * On renvoie directement la chaîne HTML/XML ; @Header fixe le bon Content-Type.
  * nginx envoie TOUT chemin à 1 ou 2 segments vers l'API ; un slug inconnu (404) est rendu par
@@ -107,6 +107,19 @@ export class SeoController {
   @Header("Content-Type", "text/html; charset=utf-8")
   badge(): string {
     return this.svc.badgePage();
+  }
+
+  // Pages juridiques. Déclarées avant ":dept" : Nest prend la première route qui correspond.
+  @Get("mentions-legales")
+  @Header("Content-Type", "text/html; charset=utf-8")
+  mentions(): string {
+    return this.svc.mentionsPage();
+  }
+
+  @Get("confidentialite")
+  @Header("Content-Type", "text/html; charset=utf-8")
+  confidentialite(): string {
+    return this.svc.confidentialitePage();
   }
 
   // Liste intégrable (iframe) d'une commune. nginx lève l'interdiction d'iframe

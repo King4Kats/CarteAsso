@@ -13,6 +13,9 @@
 (function () {
   var _paq = (window._paq = window._paq || []);
   _paq.push(["disableCookies"]);
+  // Droit d'opposition (condition de la dispense CNIL) : un navigateur réglé sur
+  // « Ne pas me pister » n'est pas compté par Matomo. Annoncé dans /confidentialite.
+  _paq.push(["setDoNotTrack", true]);
   _paq.push(["enableLinkTracking"]);
   _paq.push(["setTrackerUrl", "https://stats.flavienauvray.me/matomo.php"]);
   _paq.push(["setSiteId", "3"]);

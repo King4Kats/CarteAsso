@@ -34,6 +34,11 @@ services:
       context: .
       dockerfile: deploy/Dockerfile.api
     container_name: ca-api
+    # Journaux Docker (adresses IP des visiteurs) : rotation à 3 × 10 Mo, soit quelques
+    # semaines au plus. Promis dans /confidentialite : ne pas retirer sans changer la page.
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
     restart: unless-stopped
     environment:
       NODE_ENV: production
@@ -58,6 +63,9 @@ services:
       # SMTP_USER, qui n'est pas une adresse chez Resend -> « 501 Bad sender address ».
       SMTP_FROM: ${SMTP_FROM:-}
       CONTACT_EMAIL: ${CONTACT_EMAIL:-contact@example.com}
+      # Mentions légales : nom de l'éditeur et SIRET (laissés vides = non affichés).
+      EDITEUR_NOM: ${EDITEUR_NOM:-}
+      EDITEUR_SIRET: ${EDITEUR_SIRET:-}
     # Données RNA montées depuis l'hôte (gros fichiers livrés sans reconstruire l'image).
     volumes:
       - ./data/rna:/app/data/rna
@@ -74,6 +82,11 @@ services:
       args:
         SITE_URL: ${SITE_URL:-https://carteasso.fr}
     container_name: ca-web
+    # Journaux Docker (adresses IP des visiteurs) : rotation à 3 × 10 Mo, soit quelques
+    # semaines au plus. Promis dans /confidentialite : ne pas retirer sans changer la page.
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
     restart: unless-stopped
     ports:
       - "127.0.0.1:8088:80"

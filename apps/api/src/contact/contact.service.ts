@@ -50,7 +50,9 @@ export class ContactService {
 
   // Envoie un email (sujet + contenu HTML) à l'adresse de destination.
   // Méthode interne réutilisée par recenser() et deferencer().
-  async send(subject: string, html: string): Promise<void> {
+  // replyTo : l'e-mail saisi par le demandeur, pour que « Répondre » lui écrive
+  // directement (sans lui, la réponse partirait vers l'adresse d'envoi technique).
+  async send(subject: string, html: string, replyTo?: string): Promise<void> {
     // Pas de SMTP configuré : on simule en affichant juste le texte dans la console.
     if (!this.transporter) {
       this.logger.log(`[EMAIL SIMULÉ] Sujet: ${subject}\n${html.replace(/<[^>]+>/g, "")}`);
@@ -62,6 +64,7 @@ export class ContactService {
       to: DEST,
       subject,
       html,
+      ...(replyTo ? { replyTo } : {}),
     });
     this.logger.log(`Email envoyé → ${DEST} : ${subject}`);
   }
@@ -100,7 +103,7 @@ export class ContactService {
       <tr><td style="padding: 10px 0;"><b>Description</b></td><td style="padding: 10px 0;">${esc(data.description)}</td></tr>
     `;
     const html = this.wrapHtml("Nouvelle demande de référencement", tableContent);
-    await this.send(`[CarteAsso] Référencement — ${data.name}`, html);
+    await this.send(`[CarteAsso] Référencement — ${data.name}`, html, data.email);
   }
 
   // Même principe que recenser(), mais pour une demande de retrait
@@ -115,6 +118,6 @@ export class ContactService {
       ${data.email ? `<tr><td style="padding: 10px 0;"><b>Email contact</b></td><td style="padding: 10px 0;"><a href="mailto:${esc(data.email)}" style="color: #3B82F6;">${esc(data.email)}</a></td></tr>` : ""}
     `;
     const html = this.wrapHtml("Demande de déférencement", tableContent);
-    await this.send(`[CarteAsso] Déférencement — ${data.name}`, html);
+    await this.send(`[CarteAsso] Déférencement — ${data.name}`, html, data.email || undefined);
   }
 }

@@ -37,6 +37,11 @@ const EnvSchema = z.object({
   // réglage pour changer de domaine (carteasso.fr depuis le 20/11/2026 ; l'ancien
   // gemenskarte.fr redirige en 301, voir deploy/nginx.conf).
   SITE_URL: z.string().url().default("https://carteasso.fr"),
+  // Identité affichée dans /mentions-legales et /confidentialite (vide = ligne masquée).
+  // Hors du code car le dépôt est public : chacun règle les siennes dans son .env.
+  EDITEUR_NOM: z.string().default(""),
+  EDITEUR_SIRET: z.string().default(""),
+  CONTACT_EMAIL: z.string().default(""),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

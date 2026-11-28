@@ -15,6 +15,7 @@ import { DB, type Db } from "../db/db.module";
 import { SEO_DEPARTEMENTS, SEO_DEPT_CODES, SEO_CODE_BY_SLUG } from "./territoires";
 import { getEnv } from "../config/env";
 import { renderOg } from "./og-image";
+import { confidentialiteBody, mentionsBody, type Editeur } from "./legal";
 
 // Domaine public, réglable par SITE_URL (voir config/env.ts) : rien d'autre à changer
 // pour changer de domaine (bascule gemenskarte.fr -> carteasso.fr faite le 20/11/2026).
@@ -233,7 +234,7 @@ table.stats td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:
 </header>
 ${o.share ?? ""}
 ${o.body}
-<footer>Données issues du Répertoire National des Associations (RNA, data.gouv.fr) et enrichissements CarteAsso, sous <a href="https://www.etalab.gouv.fr/licence-ouverte-open-licence/" rel="license">Licence Ouverte 2.0</a> (réutilisation libre avec mention « CarteAsso — ${HOST} »). · <a href="/">Accueil</a> · <a href="/territoires">Toutes les communes</a> · <a href="/chiffres">Les associations en chiffres</a> · <a href="/badge">Badge et carte à intégrer</a></footer>
+<footer>Données issues du Répertoire National des Associations (RNA, data.gouv.fr) et enrichissements CarteAsso, sous <a href="https://www.etalab.gouv.fr/licence-ouverte-open-licence/" rel="license">Licence Ouverte 2.0</a> (réutilisation libre avec mention « CarteAsso — ${HOST} »). · <a href="/">Accueil</a> · <a href="/territoires">Toutes les communes</a> · <a href="/chiffres">Les associations en chiffres</a> · <a href="/badge">Badge et carte à intégrer</a> · <a href="/mentions-legales">Mentions légales</a> · <a href="/confidentialite">Confidentialité</a></footer>
 </div></body></html>`;
   }
 
@@ -415,6 +416,30 @@ ul{margin:0;padding:0 0 0 18px}li{margin:2px 0}a{color:#15151b}
 <div class="w"><h1>${c.n} association${c.n > 1 ? "s" : ""} à ${esc(c.display)}</h1><p>Source : Répertoire National des Associations, enrichi par CarteAsso.</p>${sections}</div>
 <div class="via"><img src="/favicon.svg" alt="" width="18" height="18"><a href="${page}" target="_blank" rel="noopener">Voir la carte des associations de ${esc(c.display)} sur CarteAsso</a></div>
 </body></html>`;
+  }
+
+  /** Identité de l'éditeur, lue dans le .env (voir legal.ts). */
+  private editeur(): Editeur {
+    const env = getEnv();
+    return { nom: env.EDITEUR_NOM, siret: env.EDITEUR_SIRET, email: env.CONTACT_EMAIL };
+  }
+
+  /** Page /mentions-legales (obligation LCEN : éditeur, hébergeur, contact). */
+  mentionsPage(): string {
+    return this.doc({
+      title: "Mentions légales — CarteAsso",
+      desc: "Éditeur, hébergement, origine des données et licences du site CarteAsso, la carte des associations de France.",
+      canonical: `${BASE}/mentions-legales`, body: mentionsBody(this.editeur(), HOST),
+    });
+  }
+
+  /** Page /confidentialite (RGPD : données traitées, durées, tiers, droits). */
+  confidentialitePage(): string {
+    return this.doc({
+      title: "Politique de confidentialité — CarteAsso",
+      desc: "Quelles données passent par CarteAsso : mesure d'audience sans cookie, formulaires, services tiers, et comment exercer vos droits.",
+      canonical: `${BASE}/confidentialite`, body: confidentialiteBody(this.editeur()),
+    });
   }
 
   /** Page /badge : le badge à poser sur le site d'une asso + le module à intégrer. */
