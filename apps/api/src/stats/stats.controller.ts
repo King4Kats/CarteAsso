@@ -10,6 +10,8 @@ import { getEnv } from "../config/env";
 import { StatsService } from "./stats.service";
 
 const BOT_RE = /bot|crawl|spider|slurp|preview|headless|monitor|curl|wget|python|axios|fetch\b/i;
+// Plages des robots chinois repérées dans Matomo (moteur Baidu en tête), voir track().
+const BOT_IP_RE = /^(116\.179|119\.249|36\.155|111\.45|180\.97|39\.156|220\.181)\./;
 
 // Anti-inondation du suivi : une même IP ne peut pas écrire plus de TRACK_MAX
 // événements/minute (une navigation normale en fait quelques-uns ; un script qui
@@ -52,6 +54,13 @@ export class StatsController {
     // IP non forgeable (cf-connecting-ip / dernière entrée XFF) : sert au hash
     // anonyme ET au plafond anti-inondation ci-dessous.
     const ip = clientIp(req);
+    // Robots chinois (surtout Baidu, plage 116.179.x.x) : ils exécutent le JavaScript et se
+    // faisaient compter comme des visiteurs (~70 % des « visites » fin novembre 2026).
+    // cf-ipcountry = pays de l'IP, ajouté par Cloudflare ; la liste d'IP sert de filet si
+    // l'en-tête manque. Même exclusion côté Matomo (Sites > CarteAsso > IP exclues).
+    if (String(req.headers["cf-ipcountry"] ?? "").toUpperCase() === "CN" || BOT_IP_RE.test(ip)) {
+      return { ok: true };
+    }
     const now = Date.now();
     const recent = (trackHits.get(ip) ?? []).filter((t) => now - t < TRACK_WINDOW_MS);
     if (recent.length >= TRACK_MAX) return { ok: true }; // silencieux : on n'enregistre plus
