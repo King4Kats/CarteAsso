@@ -13,6 +13,8 @@ import { Icon } from "./Icon";
 type Mode = "recenser" | "deferencer";
 
 const REASONS = [
+  // Droit d'opposition (RGPD) : l'association ne veut pas figurer sur la carte.
+  "Nous ne souhaitons pas apparaître",
   "Association fermée / dissoute",
   "Erreur dans les données",
   "Doublon",

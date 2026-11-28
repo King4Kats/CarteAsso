@@ -6,6 +6,13 @@
  */
 import { createRoot } from "react-dom/client";
 import "leaflet/dist/leaflet.css";
+// Police auto-hébergée (RGPD : aucun appel à Google). Vite copie les fichiers .woff2
+// dans /assets ; le navigateur ne télécharge que les alphabets dont la page a besoin.
+import "@fontsource/plus-jakarta-sans/400.css";
+import "@fontsource/plus-jakarta-sans/500.css";
+import "@fontsource/plus-jakarta-sans/600.css";
+import "@fontsource/plus-jakarta-sans/700.css";
+import "@fontsource/plus-jakarta-sans/800.css";
 import "./styles.css";
 import { App } from "./App";
 

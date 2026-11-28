@@ -70,7 +70,6 @@ export function confidentialiteBody(e: Editeur): string {
 <h3>Services tiers chargés par votre navigateur</h3>
 <ul>
 <li><strong>Cloudflare</strong> (États-Unis) achemine toutes les pages du site et voit donc passer votre adresse IP.</li>
-<li><strong>Google Fonts</strong> (Google, États-Unis) fournit la police de caractères de la carte : votre navigateur la télécharge chez Google, qui reçoit votre adresse IP.</li>
 <li><strong>OpenStreetMap</strong> (OpenStreetMap Foundation, Royaume-Uni) fournit les images du fond de carte, avec la même conséquence.</li>
 </ul>
 <h3>Recherche par lieu</h3>
@@ -84,7 +83,7 @@ export function confidentialiteBody(e: Editeur): string {
 <p>Vous pouvez vous y opposer à tout moment, sans avoir à vous justifier : la fiche est alors retirée et exclue des mises à jour suivantes (lien « Déférencer une association » sur la <a href="/">page d'accueil</a>, ou ${mail(e.email)}).</p>
 
 <h2>Transferts hors de l'Union européenne</h2>
-<p>Cloudflare, Google et Resend sont établis aux États-Unis et adhèrent au cadre de protection des données UE–États-Unis (Data Privacy Framework). Infomaniak et Proton sont en Suisse, et OpenStreetMap au Royaume-Uni : la Commission européenne reconnaît à ces deux pays un niveau de protection adéquat.</p>
+<p>Cloudflare et Resend sont établis aux États-Unis et adhèrent au cadre de protection des données UE–États-Unis (Data Privacy Framework). Infomaniak et Proton sont en Suisse, et OpenStreetMap au Royaume-Uni : la Commission européenne reconnaît à ces deux pays un niveau de protection adéquat.</p>
 
 <h2>Vos droits</h2>
 <p>Vous pouvez demander l'accès à vos données, leur rectification ou leur effacement, vous opposer à leur utilisation ou en demander la limitation : écrivez à ${mail(e.email)}. Je réponds dans un délai d'un mois au plus. Si vous estimez que vos droits ne sont pas respectés, vous pouvez saisir la <a href="https://www.cnil.fr/fr/plaintes" rel="nofollow">CNIL</a>.</p>`;

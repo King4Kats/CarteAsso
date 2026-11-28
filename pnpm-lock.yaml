@@ -93,6 +93,9 @@ importers:
       '@carteasso/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@fontsource/plus-jakarta-sans':
+        specifier: 5.2.8
+        version: 5.2.8
       leaflet:
         specifier: ^1.9.4
         version: 1.9.4
@@ -417,6 +420,9 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@fontsource/plus-jakarta-sans@5.2.8':
+    resolution: {integrity: sha512-P5qE49fqdeD+7DXH1KBxmMPlB17LTz1zvBhFH0tFzfnYTKVJVyb0pR6plh0ZGXxcB+Oayb54FZZw3V42/DawTw==}
 
   '@inquirer/ansi@1.0.2':
     resolution: {integrity: sha512-S8qNSZiYzFd0wAcyG5AXCvUHC5Sr7xpZ9wZ2py9XR88jUz8wooStVx5M6dRzczbBWjic9NP7+rY0Xi7qqK/aMQ==}
@@ -2557,6 +2563,8 @@ snapshots:
 
   '@esbuild/win32-x64@0.25.12':
     optional: true
+
+  '@fontsource/plus-jakarta-sans@5.2.8': {}
 
   '@inquirer/ansi@1.0.2': {}
 
