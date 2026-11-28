@@ -253,7 +253,10 @@ export async function importRna(opts: ImportOptions): Promise<ImportReport> {
            postal_code = EXCLUDED.postal_code, city = EXCLUDED.city,
            department = EXCLUDED.department, region = EXCLUDED.region,
            tags = EXCLUDED.tags, location = COALESCE(EXCLUDED.location, associations.location),
-           updated_at = now()`,
+           updated_at = now()
+         -- Fiche retirée à la demande de l'association : on ne garde que son rna_id
+         -- (pierre tombale) et l'import ne doit jamais la remplir ni la republier.
+         WHERE associations.status <> 'retiree'`,
         params,
       );
       report.upserted++;
